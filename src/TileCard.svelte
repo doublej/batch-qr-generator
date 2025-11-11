@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { $effect } from 'svelte'
   import type { TileMapping } from './types'
   import { generateQRDataURL, getTileLabel, getTileURL, downloadQR } from './utils'
 
