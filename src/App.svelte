@@ -40,6 +40,8 @@
   let qrBorderColor = $state('#000000')
   let qrBackgroundColor = $state('#FFFFFF')
   let qrForegroundColor = $state('#000000')
+  let moduleShape = $state<'square' | 'rounded' | 'dots'>('square')
+  let cornerRadius = $state([30])
 
   const PROJECT_LOGOS = [
     { path: '/logo.png', name: 'Logo' },
@@ -108,21 +110,21 @@
   async function handleExportZIP() {
     if (!batch) return
     exporting = true
-    await downloadAllQRs(batch, baseURL, errorCorrectionLevel, logoEnabled ? logoDataURL : '', logoSize[0], textSize[0], textMargin[0], showTileLabel, qrSize[0], qrMargin[0])
+    await downloadAllQRs(batch, baseURL, errorCorrectionLevel, logoEnabled ? logoDataURL : '', logoSize[0], textSize[0], textMargin[0], showTileLabel, qrSize[0], qrMargin[0], moduleShape, cornerRadius[0])
     exporting = false
   }
 
   async function handleExportSVG() {
     if (!batch) return
     exporting = true
-    await downloadAllQRsSVG(batch, baseURL, errorCorrectionLevel, logoEnabled ? logoDataURL : '', logoSize[0], textSize[0], textMargin[0], showTileLabel, qrSize[0], qrMargin[0])
+    await downloadAllQRsSVG(batch, baseURL, errorCorrectionLevel, logoEnabled ? logoDataURL : '', logoSize[0], textSize[0], textMargin[0], showTileLabel, qrSize[0], qrMargin[0], moduleShape, cornerRadius[0])
     exporting = false
   }
 
   async function handleExportPDF(pageSize: 'A4' | 'A3') {
     if (!batch) return
     exporting = true
-    await downloadPrintPDF(batch, baseURL, errorCorrectionLevel, logoEnabled ? logoDataURL : '', logoSize[0], textSize[0], textMargin[0], showTileLabel, qrSize[0], qrMargin[0], pageSize)
+    await downloadPrintPDF(batch, baseURL, errorCorrectionLevel, logoEnabled ? logoDataURL : '', logoSize[0], textSize[0], textMargin[0], showTileLabel, qrSize[0], qrMargin[0], pageSize, moduleShape, cornerRadius[0])
     exporting = false
   }
 
@@ -146,7 +148,9 @@
       textMargin: textMargin[0],
       showTileLabel,
       qrSize: qrSize[0],
-      qrMargin: qrMargin[0]
+      qrMargin: qrMargin[0],
+      moduleShape,
+      cornerRadius: cornerRadius[0]
     })
     previewQR = dataUrl
     previewLoading = false
@@ -233,6 +237,27 @@
                 <option value="H">High (30%)</option>
               </select>
             </div>
+
+            <div class="space-y-2">
+              <Label for="module-shape">Module Shape</Label>
+              <select
+                id="module-shape"
+                bind:value={moduleShape}
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="square">Square (Default)</option>
+                <option value="rounded">Rounded Corners</option>
+                <option value="dots">Circular Dots</option>
+              </select>
+            </div>
+
+            {#if moduleShape === 'rounded'}
+              <div class="space-y-2">
+                <Label for="corner-radius">Corner Radius: {cornerRadius[0]}%</Label>
+                <Slider id="corner-radius" bind:value={cornerRadius} min={0} max={50} step={5} />
+                <p class="text-xs text-muted-foreground">0% (square) - 50% (fully rounded)</p>
+              </div>
+            {/if}
 
             <div class="space-y-4">
               <div class="flex items-center justify-between">
@@ -463,6 +488,8 @@
             {showTileLabel}
             qrSize={qrSize[0]}
             qrMargin={qrMargin[0]}
+            {moduleShape}
+            cornerRadius={cornerRadius[0]}
           />
         {/each}
       </div>

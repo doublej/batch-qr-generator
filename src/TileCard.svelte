@@ -17,16 +17,18 @@
     showTileLabel: boolean
     qrSize: number
     qrMargin: number
+    moduleShape: 'square' | 'rounded' | 'dots'
+    cornerRadius: number
   }
 
-  let { tile, batchId, baseURL, totalTiles, errorCorrectionLevel, logoDataURL, logoSize, textSize, textMargin, showTileLabel, qrSize, qrMargin }: Props = $props()
+  let { tile, batchId, baseURL, totalTiles, errorCorrectionLevel, logoDataURL, logoSize, textSize, textMargin, showTileLabel, qrSize, qrMargin, moduleShape, cornerRadius }: Props = $props()
   let qrCode = $state('')
   let loading = $state(true)
   let downloading = $state(false)
 
   async function handleDownload() {
     downloading = true
-    await downloadQR(tile, batchId, baseURL, totalTiles, errorCorrectionLevel, logoDataURL, logoSize, textSize, textMargin, showTileLabel, qrSize, qrMargin)
+    await downloadQR(tile, batchId, baseURL, totalTiles, errorCorrectionLevel, logoDataURL, logoSize, textSize, textMargin, showTileLabel, qrSize, qrMargin, moduleShape, cornerRadius)
     downloading = false
   }
 
@@ -34,7 +36,7 @@
     loading = true
     const url = getTileURL(tile.secure_id, baseURL)
     const tileLabel = getTileLabel(batchId, tile.tile_number, totalTiles)
-    generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, textSize, textMargin, showTileLabel, qrSize, qrMargin }).then(result => {
+    generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, textSize, textMargin, showTileLabel, qrSize, qrMargin, moduleShape, cornerRadius }).then(result => {
       qrCode = result
       loading = false
     })

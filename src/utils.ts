@@ -13,10 +13,24 @@ interface QROptions {
   showTileLabel?: boolean
   qrSize?: number
   qrMargin?: number
+  moduleShape?: 'square' | 'rounded' | 'dots'
+  cornerRadius?: number
+}
+
+function drawRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
+  ctx.beginPath()
+  ctx.moveTo(x + radius, y)
+  ctx.arcTo(x + width, y, x + width, y + height, radius)
+  ctx.arcTo(x + width, y + height, x, y + height, radius)
+  ctx.arcTo(x, y + height, x, y, radius)
+  ctx.arcTo(x, y, x + width, y, radius)
+  ctx.closePath()
+  ctx.fill()
 }
 
 export async function generateQRDataURL(text: string, options?: QROptions): Promise<string> {
   const qrSize = options?.qrSize || 300
+  const moduleShape = options?.moduleShape || 'square'
   const canvas = document.createElement('canvas')
 
   await QRCode.toCanvas(canvas, text, {
@@ -24,6 +38,33 @@ export async function generateQRDataURL(text: string, options?: QROptions): Prom
     width: qrSize,
     margin: options?.qrMargin ?? 4
   })
+
+  if (moduleShape !== 'square') {
+    const ctx = canvas.getContext('2d')!
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    const pixelSize = Math.ceil(qrSize / 100)
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.fillStyle = 'white'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.fillStyle = 'black'
+
+    for (let y = 0; y < canvas.height; y += pixelSize) {
+      for (let x = 0; x < canvas.width; x += pixelSize) {
+        const i = (y * canvas.width + x) * 4
+        if (imageData.data[i] < 128) {
+          if (moduleShape === 'dots') {
+            ctx.beginPath()
+            ctx.arc(x + pixelSize / 2, y + pixelSize / 2, pixelSize / 2, 0, Math.PI * 2)
+            ctx.fill()
+          } else if (moduleShape === 'rounded') {
+            const radius = (options?.cornerRadius ?? 30) / 100 * pixelSize
+            drawRoundedRect(ctx, x, y, pixelSize, pixelSize, radius)
+          }
+        }
+      }
+    }
+  }
 
   if (options?.logoDataURL) {
     const ctx = canvas.getContext('2d')!
@@ -109,11 +150,13 @@ export async function downloadQR(
   textMargin: number = 20,
   showTileLabel: boolean = true,
   qrSize: number = 300,
-  qrMargin: number = 4
+  qrMargin: number = 4,
+  moduleShape: 'square' | 'rounded' | 'dots' = 'square',
+  cornerRadius: number = 30
 ): Promise<void> {
   const url = getTileURL(tile.secure_id, baseURL)
   const tileLabel = getTileLabel(batchId, tile.tile_number, totalTiles)
-  const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, textSize, textMargin, showTileLabel, qrSize, qrMargin })
+  const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, textSize, textMargin, showTileLabel, qrSize, qrMargin, moduleShape, cornerRadius })
   const blob = await (await fetch(dataUrl)).blob()
   const filename = `${batchId}-tile-${tile.tile_number.toString().padStart(3, '0')}.png`
   downloadFile(blob, filename)
@@ -129,14 +172,16 @@ export async function downloadAllQRs(
   textMargin: number = 20,
   showTileLabel: boolean = true,
   qrSize: number = 300,
-  qrMargin: number = 4
+  qrMargin: number = 4,
+  moduleShape: 'square' | 'rounded' | 'dots' = 'square',
+  cornerRadius: number = 30
 ): Promise<void> {
   const zip = new JSZip()
 
   for (const tile of batch.tiles) {
     const url = getTileURL(tile.secure_id, baseURL)
     const tileLabel = getTileLabel(batch.batchId, tile.tile_number, batch.totalTiles)
-    const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, textSize, textMargin, showTileLabel, qrSize, qrMargin })
+    const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, textSize, textMargin, showTileLabel, qrSize, qrMargin, moduleShape, cornerRadius })
     const blob = await (await fetch(dataUrl)).blob()
     const filename = `tile-${tile.tile_number.toString().padStart(3, '0')}.png`
     zip.file(filename, blob)
@@ -157,7 +202,9 @@ export async function downloadPrintPDF(
   showTileLabel: boolean = true,
   qrSize: number = 300,
   qrMargin: number = 4,
-  pageSize: 'A4' | 'A3' = 'A4'
+  pageSize: 'A4' | 'A3' = 'A4',
+  moduleShape: 'square' | 'rounded' | 'dots' = 'square',
+  cornerRadius: number = 30
 ): Promise<void> {
   const pdf = new jsPDF({
     orientation: 'portrait',
@@ -185,7 +232,7 @@ export async function downloadPrintPDF(
 
     const url = getTileURL(tile.secure_id, baseURL)
     const tileLabel = getTileLabel(batch.batchId, tile.tile_number, batch.totalTiles)
-    const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, textSize, textMargin, showTileLabel, qrSize, qrMargin })
+    const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, textSize, textMargin, showTileLabel, qrSize, qrMargin, moduleShape, cornerRadius })
 
     const posInPage = qrCount % qrsPerPage
     const col = posInPage % cols
@@ -301,14 +348,16 @@ export async function downloadAllQRsSVG(
   textMargin: number = 20,
   showTileLabel: boolean = true,
   qrSize: number = 300,
-  qrMargin: number = 4
+  qrMargin: number = 4,
+  moduleShape: 'square' | 'rounded' | 'dots' = 'square',
+  cornerRadius: number = 30
 ): Promise<void> {
   const zip = new JSZip()
 
   for (const tile of batch.tiles) {
     const url = getTileURL(tile.secure_id, baseURL)
     const tileLabel = getTileLabel(batch.batchId, tile.tile_number, batch.totalTiles)
-    const svg = await generateQRSVG(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, textSize, textMargin, showTileLabel, qrSize, qrMargin })
+    const svg = await generateQRSVG(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, textSize, textMargin, showTileLabel, qrSize, qrMargin, moduleShape, cornerRadius })
     const filename = `tile-${tile.tile_number.toString().padStart(3, '0')}.svg`
     zip.file(filename, svg)
   }
