@@ -44,6 +44,11 @@
   let cornerRadius = $state([30])
   let eyeColor = $state('#000000')
   let dataModuleColor = $state('#000000')
+  let useGradient = $state(false)
+  let gradientType = $state<'linear' | 'radial'>('linear')
+  let gradientStart = $state('#000000')
+  let gradientEnd = $state('#666666')
+  let gradientAngle = $state([0])
 
   const PROJECT_LOGOS = [
     { path: '/logo.png', name: 'Logo' },
@@ -154,7 +159,12 @@
       moduleShape,
       cornerRadius: cornerRadius[0],
       eyeColor,
-      dataModuleColor
+      dataModuleColor,
+      useGradient,
+      gradientType,
+      gradientStart,
+      gradientEnd,
+      gradientAngle: gradientAngle[0]
     })
     previewQR = dataUrl
     previewLoading = false
@@ -271,6 +281,47 @@
             <div class="space-y-2">
               <Label for="data-module-color">Data Module Color</Label>
               <Input id="data-module-color" type="color" bind:value={dataModuleColor} class="h-10" />
+            </div>
+
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <Label for="gradient-enabled" class="text-base font-semibold">Gradient Fill</Label>
+                <Checkbox id="gradient-enabled" bind:checked={useGradient} />
+              </div>
+
+              {#if useGradient}
+                <div class="space-y-4 pl-4 border-l-2 border-border">
+                  <div class="space-y-2">
+                    <Label for="gradient-type">Gradient Type</Label>
+                    <select
+                      id="gradient-type"
+                      bind:value={gradientType}
+                      class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <option value="linear">Linear</option>
+                      <option value="radial">Radial</option>
+                    </select>
+                  </div>
+
+                  <div class="space-y-2">
+                    <Label for="gradient-start">Start Color</Label>
+                    <Input id="gradient-start" type="color" bind:value={gradientStart} class="h-10" />
+                  </div>
+
+                  <div class="space-y-2">
+                    <Label for="gradient-end">End Color</Label>
+                    <Input id="gradient-end" type="color" bind:value={gradientEnd} class="h-10" />
+                  </div>
+
+                  {#if gradientType === 'linear'}
+                    <div class="space-y-2">
+                      <Label for="gradient-angle">Angle: {gradientAngle[0]}°</Label>
+                      <Slider id="gradient-angle" bind:value={gradientAngle} min={0} max={360} step={15} />
+                      <p class="text-xs text-muted-foreground">0° (horizontal) - 360° (full rotation)</p>
+                    </div>
+                  {/if}
+                </div>
+              {/if}
             </div>
 
             <div class="space-y-4">

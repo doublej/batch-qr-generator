@@ -18,6 +18,11 @@ interface QROptions {
   eyeShape?: 'square' | 'rounded' | 'dots'
   eyeColor?: string
   dataModuleColor?: string
+  useGradient?: boolean
+  gradientType?: 'linear' | 'radial'
+  gradientStart?: string
+  gradientEnd?: string
+  gradientAngle?: number
 }
 
 function drawRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
@@ -48,6 +53,7 @@ export async function generateQRDataURL(text: string, options?: QROptions): Prom
   const eyeColor = options?.eyeColor || '#000000'
   const dataModuleColor = options?.dataModuleColor || '#000000'
   const margin = options?.qrMargin ?? 4
+  const useGradient = options?.useGradient || false
   const canvas = document.createElement('canvas')
 
   await QRCode.toCanvas(canvas, text, {
@@ -56,7 +62,7 @@ export async function generateQRDataURL(text: string, options?: QROptions): Prom
     margin
   })
 
-  if (moduleShape !== 'square' || eyeColor !== dataModuleColor) {
+  if (moduleShape !== 'square' || eyeColor !== dataModuleColor || useGradient) {
     const ctx = canvas.getContext('2d')!
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
     const pixelSize = Math.ceil(qrSize / 100)
@@ -65,12 +71,37 @@ export async function generateQRDataURL(text: string, options?: QROptions): Prom
     ctx.fillStyle = 'white'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
+    let dataGradient: CanvasGradient | null = null
+    if (useGradient) {
+      const gradientType = options?.gradientType || 'linear'
+      const gradientStart = options?.gradientStart || '#000000'
+      const gradientEnd = options?.gradientEnd || '#666666'
+      const angle = (options?.gradientAngle ?? 0) * Math.PI / 180
+
+      if (gradientType === 'linear') {
+        const x1 = canvas.width / 2 - Math.cos(angle) * canvas.width / 2
+        const y1 = canvas.height / 2 - Math.sin(angle) * canvas.height / 2
+        const x2 = canvas.width / 2 + Math.cos(angle) * canvas.width / 2
+        const y2 = canvas.height / 2 + Math.sin(angle) * canvas.height / 2
+        dataGradient = ctx.createLinearGradient(x1, y1, x2, y2)
+      } else {
+        dataGradient = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, 0, canvas.width / 2, canvas.height / 2, canvas.width / 2)
+      }
+      dataGradient.addColorStop(0, gradientStart)
+      dataGradient.addColorStop(1, gradientEnd)
+    }
+
     for (let y = 0; y < canvas.height; y += pixelSize) {
       for (let x = 0; x < canvas.width; x += pixelSize) {
         const i = (y * canvas.width + x) * 4
         if (imageData.data[i] < 128) {
           const isEye = isInEyeArea(x, y, pixelSize, canvas.width, margin)
-          ctx.fillStyle = isEye ? eyeColor : dataModuleColor
+
+          if (isEye) {
+            ctx.fillStyle = eyeColor
+          } else {
+            ctx.fillStyle = useGradient && dataGradient ? dataGradient : dataModuleColor
+          }
 
           if (moduleShape === 'dots') {
             ctx.beginPath()
