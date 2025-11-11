@@ -1,31 +1,33 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
+  import { $effect } from 'svelte'
   import type { TileMapping } from './types'
   import { generateQRDataURL, getTileLabel, getTileURL, downloadQR } from './utils'
 
   interface Props {
     tile: TileMapping
     batchId: string
+    baseURL: string
   }
 
-  let { tile, batchId }: Props = $props()
+  let { tile, batchId, baseURL }: Props = $props()
   let qrCode = $state('')
   let loading = $state(true)
   let downloading = $state(false)
 
-  async function loadQR() {
-    const url = getTileURL(tile.secure_id)
-    qrCode = await generateQRDataURL(url)
-    loading = false
-  }
-
   async function handleDownload() {
     downloading = true
-    await downloadQR(tile, batchId)
+    await downloadQR(tile, batchId, baseURL)
     downloading = false
   }
 
-  onMount(loadQR)
+  $effect(() => {
+    loading = true
+    const url = getTileURL(tile.secure_id, baseURL)
+    generateQRDataURL(url).then(result => {
+      qrCode = result
+      loading = false
+    })
+  })
 </script>
 
 <div class="tile-card">

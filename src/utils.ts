@@ -14,8 +14,8 @@ export function getTileLabel(batchId: string, tileNumber: number): string {
   return `drop ${batchId} - tile ${tileNumber.toString().padStart(3, '0')}`
 }
 
-export function getTileURL(secureId: string): string {
-  return `https://haist.ai/t/${secureId}`
+export function getTileURL(secureId: string, baseURL: string): string {
+  return `${baseURL}${secureId}`
 }
 
 export function downloadFile(blob: Blob, filename: string): void {
@@ -27,19 +27,19 @@ export function downloadFile(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url)
 }
 
-export async function downloadQR(tile: TileMapping, batchId: string): Promise<void> {
-  const url = getTileURL(tile.secure_id)
+export async function downloadQR(tile: TileMapping, batchId: string, baseURL: string): Promise<void> {
+  const url = getTileURL(tile.secure_id, baseURL)
   const dataUrl = await generateQRDataURL(url)
   const blob = await (await fetch(dataUrl)).blob()
   const filename = `${batchId}-tile-${tile.tile_number.toString().padStart(3, '0')}.png`
   downloadFile(blob, filename)
 }
 
-export async function downloadAllQRs(batch: TileBatch): Promise<void> {
+export async function downloadAllQRs(batch: TileBatch, baseURL: string): Promise<void> {
   const zip = new JSZip()
 
   for (const tile of batch.tiles) {
-    const url = getTileURL(tile.secure_id)
+    const url = getTileURL(tile.secure_id, baseURL)
     const dataUrl = await generateQRDataURL(url)
     const blob = await (await fetch(dataUrl)).blob()
     const filename = `tile-${tile.tile_number.toString().padStart(3, '0')}.png`
@@ -50,13 +50,13 @@ export async function downloadAllQRs(batch: TileBatch): Promise<void> {
   downloadFile(zipBlob, `${batch.batchId}-qrcodes.zip`)
 }
 
-export function downloadCSV(batch: TileBatch): void {
+export function downloadCSV(batch: TileBatch, baseURL: string): void {
   const rows = [
     ['Tile Number', 'Secure ID', 'URL'],
     ...batch.tiles.map(tile => [
       tile.tile_number.toString(),
       tile.secure_id,
-      getTileURL(tile.secure_id)
+      getTileURL(tile.secure_id, baseURL)
     ])
   ]
 

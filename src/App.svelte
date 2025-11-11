@@ -14,6 +14,7 @@
   let batch = $state<TileBatch | null>(null)
   let loading = $state(false)
   let exporting = $state(false)
+  let baseURL = $state('https://haist.ai/t/')
 
   async function loadBatch(filename: string) {
     loading = true
@@ -36,13 +37,13 @@
   async function handleExportZIP() {
     if (!batch) return
     exporting = true
-    await downloadAllQRs(batch)
+    await downloadAllQRs(batch, baseURL)
     exporting = false
   }
 
   function handleExportCSV() {
     if (!batch) return
-    downloadCSV(batch)
+    downloadCSV(batch, baseURL)
   }
 </script>
 
@@ -61,6 +62,17 @@
           <option value={file}>{file}</option>
         {/each}
       </select>
+    </div>
+
+    <div class="url-config">
+      <label for="base-url">Base URL:</label>
+      <input
+        id="base-url"
+        type="text"
+        bind:value={baseURL}
+        placeholder="https://haist.ai/t/"
+      />
+      <span class="url-preview">QR codes will link to: {baseURL}[secure-id]</span>
     </div>
 
     {#if batch}
@@ -86,7 +98,7 @@
   {:else if batch}
     <div class="tiles-grid">
       {#each batch.tiles as tile}
-        <TileCard {tile} batchId={batch.batchId} />
+        <TileCard {tile} batchId={batch.batchId} {baseURL} />
       {/each}
     </div>
   {/if}
@@ -131,16 +143,37 @@
     gap: 1rem;
   }
 
+  .url-config {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .url-preview {
+    font-size: 0.9rem;
+    color: #666;
+    font-family: monospace;
+  }
+
   label {
     font-weight: 600;
   }
 
-  select {
+  select,
+  input[type="text"] {
     padding: 0.5rem 1rem;
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 1rem;
+  }
+
+  select {
     min-width: 200px;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    max-width: 500px;
   }
 
   .batch-info h2 {
