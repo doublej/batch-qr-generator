@@ -2,7 +2,7 @@
   import TileCard from './TileCard.svelte'
   import type { TileBatch } from './types'
   import { parseTileBatch } from './parser'
-  import { downloadAllQRs, downloadCSV, generateQRDataURL, getTileURL, getTileLabel, downloadPrintPDF } from './utils'
+  import { downloadAllQRs, downloadAllQRsSVG, downloadCSV, generateQRDataURL, getTileURL, getTileLabel, downloadPrintPDF } from './utils'
   import { Button } from '$lib/components/ui/button'
   import { Card, CardHeader, CardContent } from '$lib/components/ui/card'
   import { Input } from '$lib/components/ui/input'
@@ -109,6 +109,13 @@
     if (!batch) return
     exporting = true
     await downloadAllQRs(batch, baseURL, errorCorrectionLevel, logoEnabled ? logoDataURL : '', logoSize[0], textSize[0], textMargin[0], showTileLabel, qrSize[0], qrMargin[0])
+    exporting = false
+  }
+
+  async function handleExportSVG() {
+    if (!batch) return
+    exporting = true
+    await downloadAllQRsSVG(batch, baseURL, errorCorrectionLevel, logoEnabled ? logoDataURL : '', logoSize[0], textSize[0], textMargin[0], showTileLabel, qrSize[0], qrMargin[0])
     exporting = false
   }
 
@@ -379,9 +386,14 @@
                 </Button>
               {:else}
                 <div class="space-y-2">
-                  <Button class="w-full" onclick={handleExportZIP} disabled={exporting}>
-                    {exporting ? 'Exporting...' : 'Download All QR Codes (ZIP)'}
-                  </Button>
+                  <div class="grid grid-cols-2 gap-2">
+                    <Button class="w-full" onclick={handleExportZIP} disabled={exporting}>
+                      {exporting ? 'Exporting...' : 'PNG (ZIP)'}
+                    </Button>
+                    <Button class="w-full" onclick={handleExportSVG} disabled={exporting}>
+                      {exporting ? 'Exporting...' : 'SVG (ZIP)'}
+                    </Button>
+                  </div>
                   <div class="grid grid-cols-2 gap-2">
                     <Button variant="outline" onclick={() => handleExportPDF('A4')} disabled={exporting}>
                       Print Layout (A4)

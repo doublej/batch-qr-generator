@@ -215,3 +215,104 @@ export function downloadCSV(batch: TileBatch, baseURL: string): void {
   const blob = new Blob([csv], { type: 'text/csv' })
   downloadFile(blob, `${batch.batchId}-tiles.csv`)
 }
+
+export async function generateQRSVG(text: string, options?: QROptions): Promise<string> {
+  const qrSize = options?.qrSize || 300
+
+  let svgString = await QRCode.toString(text, {
+    errorCorrectionLevel: options?.errorCorrectionLevel || 'M',
+    width: qrSize,
+    margin: options?.qrMargin ?? 4,
+    type: 'svg'
+  })
+
+  if (options?.logoDataURL) {
+    const sizePercent = (options.logoSize || 25) / 100
+    const logoSize = qrSize * sizePercent
+    const logoX = (qrSize - logoSize) / 2
+    const logoY = (qrSize - logoSize) / 2
+    const padding = 5
+
+    const logoRect = `<rect x="${logoX - padding}" y="${logoY - padding}" width="${logoSize + padding * 2}" height="${logoSize + padding * 2}" fill="white"/>`
+    const logoImage = `<image x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" href="${options.logoDataURL}"/>`
+
+    svgString = svgString.replace('</svg>', `${logoRect}${logoImage}</svg>`)
+  }
+
+  if (!options || !options.showTileLabel) {
+    return svgString
+  }
+
+  const marginPercent = (options.textMargin || 20) / 100
+  const margin = Math.floor(qrSize * marginPercent)
+  const fontSize = options.textSize || 16
+  const lineHeight = fontSize * 1.5
+
+  const textHeight = lineHeight + margin
+  const finalWidth = qrSize + margin * 2
+  const finalHeight = qrSize + margin * 2 + textHeight
+
+  const parser = new DOMParser()
+  const svgDoc = parser.parseFromString(svgString, 'image/svg+xml')
+  const svgElement = svgDoc.querySelector('svg')
+
+  if (!svgElement) return svgString
+
+  const wrapper = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${finalWidth} ${finalHeight}" width="${finalWidth}" height="${finalHeight}">
+  <rect width="${finalWidth}" height="${finalHeight}" fill="white"/>
+  <g transform="translate(${margin}, ${margin})">
+    ${svgElement.innerHTML}
+  </g>
+  <text x="${finalWidth / 2}" y="${qrSize + margin + margin + lineHeight * 0.8}" font-family="system-ui, sans-serif" font-size="${fontSize}" text-anchor="middle" fill="black">${options.tileLabel}</text>
+</svg>`
+
+  return wrapper
+}
+
+export async function downloadQRSVG(
+  tile: TileMapping,
+  batchId: string,
+  baseURL: string,
+  totalTiles: number,
+  errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H' = 'M',
+  logoDataURL: string = '',
+  logoSize: number = 25,
+  textSize: number = 16,
+  textMargin: number = 20,
+  showTileLabel: boolean = true,
+  qrSize: number = 300,
+  qrMargin: number = 4
+): Promise<void> {
+  const url = getTileURL(tile.secure_id, baseURL)
+  const tileLabel = getTileLabel(batchId, tile.tile_number, totalTiles)
+  const svg = await generateQRSVG(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, textSize, textMargin, showTileLabel, qrSize, qrMargin })
+  const blob = new Blob([svg], { type: 'image/svg+xml' })
+  const filename = `${batchId}-tile-${tile.tile_number.toString().padStart(3, '0')}.svg`
+  downloadFile(blob, filename)
+}
+
+export async function downloadAllQRsSVG(
+  batch: TileBatch,
+  baseURL: string,
+  errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H' = 'M',
+  logoDataURL: string = '',
+  logoSize: number = 25,
+  textSize: number = 16,
+  textMargin: number = 20,
+  showTileLabel: boolean = true,
+  qrSize: number = 300,
+  qrMargin: number = 4
+): Promise<void> {
+  const zip = new JSZip()
+
+  for (const tile of batch.tiles) {
+    const url = getTileURL(tile.secure_id, baseURL)
+    const tileLabel = getTileLabel(batch.batchId, tile.tile_number, batch.totalTiles)
+    const svg = await generateQRSVG(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, textSize, textMargin, showTileLabel, qrSize, qrMargin })
+    const filename = `tile-${tile.tile_number.toString().padStart(3, '0')}.svg`
+    zip.file(filename, svg)
+  }
+
+  const zipBlob = await zip.generateAsync({ type: 'blob' })
+  downloadFile(zipBlob, `${batch.batchId}-qrcodes-svg.zip`)
+}
