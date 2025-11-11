@@ -1,117 +1,77 @@
 <script lang="ts">
   import type { TileMapping } from './types'
   import { generateQRDataURL, getTileLabel, getTileURL, downloadQR } from './utils'
+  import { Card, CardHeader, CardContent } from '$lib/components/ui/card'
+  import { Button } from '$lib/components/ui/button'
 
   interface Props {
     tile: TileMapping
     batchId: string
     baseURL: string
-    prefixText: string
-    suffixText: string
+    totalTiles: number
+    errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H'
+    logoDataURL: string
+    logoSize: number
+    textSize: number
+    textMargin: number
+    showTileLabel: boolean
+    qrSize: number
+    qrMargin: number
   }
 
-  let { tile, batchId, baseURL, prefixText, suffixText }: Props = $props()
+  let { tile, batchId, baseURL, totalTiles, errorCorrectionLevel, logoDataURL, logoSize, textSize, textMargin, showTileLabel, qrSize, qrMargin }: Props = $props()
   let qrCode = $state('')
   let loading = $state(true)
   let downloading = $state(false)
 
   async function handleDownload() {
     downloading = true
-    await downloadQR(tile, batchId, baseURL, prefixText, suffixText)
+    await downloadQR(tile, batchId, baseURL, totalTiles, errorCorrectionLevel, logoDataURL, logoSize, textSize, textMargin, showTileLabel, qrSize, qrMargin)
     downloading = false
   }
 
   $effect(() => {
     loading = true
     const url = getTileURL(tile.secure_id, baseURL)
-    const tileLabel = getTileLabel(batchId, tile.tile_number)
-    generateQRDataURL(url, { tileLabel, prefixText, suffixText }).then(result => {
+    const tileLabel = getTileLabel(batchId, tile.tile_number, totalTiles)
+    generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, textSize, textMargin, showTileLabel, qrSize, qrMargin }).then(result => {
       qrCode = result
       loading = false
     })
   })
 </script>
 
-<div class="tile-card">
-  <div class="tile-label">
-    {getTileLabel(batchId, tile.tile_number)}
-  </div>
+<Card class="flex flex-col h-full">
+  <CardHeader class="pb-3">
+    <h3 class="font-semibold text-center">
+      {getTileLabel(batchId, tile.tile_number, totalTiles)}
+    </h3>
+  </CardHeader>
 
-  <div class="qr-container">
-    {#if loading}
-      <div class="loading">Generating QR...</div>
-    {:else}
-      <img src={qrCode} alt="QR Code for {tile.secure_id}" />
-    {/if}
-  </div>
+  <CardContent class="flex flex-col items-center gap-4 flex-1">
+    <div class="w-full flex items-center justify-center min-h-[200px]">
+      {#if loading}
+        <p class="text-muted-foreground text-sm">Generating QR...</p>
+      {:else}
+        <img src={qrCode} alt="QR Code for {tile.secure_id}" class="max-w-full h-auto" />
+      {/if}
+    </div>
 
-  <div class="tile-id">{tile.secure_id}</div>
+    <div class="w-full space-y-2">
+      <p class="text-xs text-muted-foreground font-mono text-center break-all">
+        {tile.secure_id}
+      </p>
+      <p class="text-xs text-primary font-mono text-center break-all">
+        {getTileURL(tile.secure_id, baseURL)}
+      </p>
+    </div>
 
-  <button onclick={handleDownload} disabled={loading || downloading}>
-    {downloading ? 'Downloading...' : 'Download'}
-  </button>
-</div>
-
-<style>
-  .tile-card {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.75rem;
-    background: white;
-  }
-
-  .tile-label {
-    font-weight: 600;
-    font-size: 0.9rem;
-    text-align: center;
-  }
-
-  .qr-container {
-    min-height: 200px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .qr-container img {
-    max-width: 100%;
-    height: auto;
-  }
-
-  .loading {
-    color: #666;
-    font-size: 0.9rem;
-  }
-
-  .tile-id {
-    font-family: monospace;
-    font-size: 0.8rem;
-    color: #666;
-    word-break: break-all;
-    text-align: center;
-  }
-
-  button {
-    padding: 0.5rem 1rem;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: background 0.2s;
-  }
-
-  button:hover:not(:disabled) {
-    background: #0056b3;
-  }
-
-  button:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-  }
-</style>
+    <Button
+      class="w-full"
+      onclick={handleDownload}
+      disabled={loading || downloading}
+    >
+      {downloading ? 'Downloading...' : 'Download'}
+    </Button>
+  </CardContent>
+</Card>

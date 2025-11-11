@@ -34,21 +34,19 @@ function parseTiles(content: string): TileMapping[] {
 
 export function parseTileBatch(content: string): TileBatch {
   const sections = content.split('----').map(s => s.trim())
+  const allLines = content.split('\n').map(l => l.trim())
 
-  const [header, ...rest] = sections
-  const lines = header.split('\n').filter(l => l.trim())
+  const title = extractValue(allLines.find(l => l.startsWith('Title:')) || '')
+  const batchId = extractValue(allLines.find(l => l.startsWith('Batch-id:')) || '')
+  const shopifyProductId = extractValue(allLines.find(l => l.startsWith('Shopify-product-id:')) || '')
+  const totalTiles = parseInt(extractValue(allLines.find(l => l.startsWith('Total-tiles:')) || '0'))
+  const idLength = parseInt(extractValue(allLines.find(l => l.startsWith('Id-length:')) || '0'))
+  const includeBatchPrefix = extractValue(allLines.find(l => l.startsWith('Include-batch-prefix:')) || 'false') === 'true'
 
-  const title = extractValue(lines.find(l => l.startsWith('Title:')) || '')
-  const batchId = extractValue(lines.find(l => l.startsWith('Batch-id:')) || '')
-  const shopifyProductId = extractValue(lines.find(l => l.startsWith('Shopify-product-id:')) || '')
-  const totalTiles = parseInt(extractValue(lines.find(l => l.startsWith('Total-tiles:')) || '0'))
-  const idLength = parseInt(extractValue(lines.find(l => l.startsWith('Id-length:')) || '0'))
-  const includeBatchPrefix = extractValue(lines.find(l => l.startsWith('Include-batch-prefix:')) || 'false') === 'true'
-
-  const tilesSection = rest.find(s => s.includes('Tile-mappings:'))
+  const tilesSection = sections.find(s => s.includes('Tile-mappings:'))
   const tiles = tilesSection ? parseTiles(tilesSection) : []
 
-  const uuidSection = rest.find(s => s.startsWith('Uuid:'))
+  const uuidSection = sections.find(s => s.startsWith('Uuid:'))
   const uuid = uuidSection ? extractValue(uuidSection) : ''
 
   return {
