@@ -42,6 +42,8 @@
   let qrForegroundColor = $state('#000000')
   let moduleShape = $state<'square' | 'rounded' | 'dots'>('square')
   let cornerRadius = $state([30])
+  let eyeColor = $state('#000000')
+  let dataModuleColor = $state('#000000')
 
   const PROJECT_LOGOS = [
     { path: '/logo.png', name: 'Logo' },
@@ -150,7 +152,9 @@
       qrSize: qrSize[0],
       qrMargin: qrMargin[0],
       moduleShape,
-      cornerRadius: cornerRadius[0]
+      cornerRadius: cornerRadius[0],
+      eyeColor,
+      dataModuleColor
     })
     previewQR = dataUrl
     previewLoading = false
@@ -258,6 +262,16 @@
                 <p class="text-xs text-muted-foreground">0% (square) - 50% (fully rounded)</p>
               </div>
             {/if}
+
+            <div class="space-y-2">
+              <Label for="eye-color">Eye Pattern Color</Label>
+              <Input id="eye-color" type="color" bind:value={eyeColor} class="h-10" />
+            </div>
+
+            <div class="space-y-2">
+              <Label for="data-module-color">Data Module Color</Label>
+              <Input id="data-module-color" type="color" bind:value={dataModuleColor} class="h-10" />
+            </div>
 
             <div class="space-y-4">
               <div class="flex items-center justify-between">

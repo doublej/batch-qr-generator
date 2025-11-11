@@ -15,6 +15,9 @@ interface QROptions {
   qrMargin?: number
   moduleShape?: 'square' | 'rounded' | 'dots'
   cornerRadius?: number
+  eyeShape?: 'square' | 'rounded' | 'dots'
+  eyeColor?: string
+  dataModuleColor?: string
 }
 
 function drawRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
@@ -28,18 +31,32 @@ function drawRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, wi
   ctx.fill()
 }
 
+function isInEyeArea(x: number, y: number, pixelSize: number, canvasSize: number, margin: number): boolean {
+  const eyeSize = 7 * pixelSize
+  const marginPx = margin * pixelSize
+
+  const topLeft = x < marginPx + eyeSize && y < marginPx + eyeSize
+  const topRight = x > canvasSize - marginPx - eyeSize && y < marginPx + eyeSize
+  const bottomLeft = x < marginPx + eyeSize && y > canvasSize - marginPx - eyeSize
+
+  return topLeft || topRight || bottomLeft
+}
+
 export async function generateQRDataURL(text: string, options?: QROptions): Promise<string> {
   const qrSize = options?.qrSize || 300
   const moduleShape = options?.moduleShape || 'square'
+  const eyeColor = options?.eyeColor || '#000000'
+  const dataModuleColor = options?.dataModuleColor || '#000000'
+  const margin = options?.qrMargin ?? 4
   const canvas = document.createElement('canvas')
 
   await QRCode.toCanvas(canvas, text, {
     errorCorrectionLevel: options?.errorCorrectionLevel || 'M',
     width: qrSize,
-    margin: options?.qrMargin ?? 4
+    margin
   })
 
-  if (moduleShape !== 'square') {
+  if (moduleShape !== 'square' || eyeColor !== dataModuleColor) {
     const ctx = canvas.getContext('2d')!
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
     const pixelSize = Math.ceil(qrSize / 100)
@@ -47,12 +64,14 @@ export async function generateQRDataURL(text: string, options?: QROptions): Prom
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     ctx.fillStyle = 'white'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
-    ctx.fillStyle = 'black'
 
     for (let y = 0; y < canvas.height; y += pixelSize) {
       for (let x = 0; x < canvas.width; x += pixelSize) {
         const i = (y * canvas.width + x) * 4
         if (imageData.data[i] < 128) {
+          const isEye = isInEyeArea(x, y, pixelSize, canvas.width, margin)
+          ctx.fillStyle = isEye ? eyeColor : dataModuleColor
+
           if (moduleShape === 'dots') {
             ctx.beginPath()
             ctx.arc(x + pixelSize / 2, y + pixelSize / 2, pixelSize / 2, 0, Math.PI * 2)
@@ -60,6 +79,8 @@ export async function generateQRDataURL(text: string, options?: QROptions): Prom
           } else if (moduleShape === 'rounded') {
             const radius = (options?.cornerRadius ?? 30) / 100 * pixelSize
             drawRoundedRect(ctx, x, y, pixelSize, pixelSize, radius)
+          } else {
+            ctx.fillRect(x, y, pixelSize, pixelSize)
           }
         }
       }
