@@ -15,6 +15,8 @@
   let loading = $state(false)
   let exporting = $state(false)
   let baseURL = $state('https://haist.ai/t/')
+  let prefixText = $state('')
+  let suffixText = $state('')
 
   async function loadBatch(filename: string) {
     loading = true
@@ -37,7 +39,7 @@
   async function handleExportZIP() {
     if (!batch) return
     exporting = true
-    await downloadAllQRs(batch, baseURL)
+    await downloadAllQRs(batch, baseURL, prefixText, suffixText)
     exporting = false
   }
 
@@ -75,6 +77,27 @@
       <span class="url-preview">QR codes will link to: {baseURL}[secure-id]</span>
     </div>
 
+    <div class="text-config">
+      <div class="text-input-group">
+        <label for="prefix-text">Text before tile ID:</label>
+        <input
+          id="prefix-text"
+          type="text"
+          bind:value={prefixText}
+          placeholder="e.g., Scan for"
+        />
+      </div>
+      <div class="text-input-group">
+        <label for="suffix-text">Text after tile ID:</label>
+        <input
+          id="suffix-text"
+          type="text"
+          bind:value={suffixText}
+          placeholder="e.g., Register now!"
+        />
+      </div>
+    </div>
+
     {#if batch}
       <div class="batch-info">
         <h2>{batch.title}</h2>
@@ -98,7 +121,7 @@
   {:else if batch}
     <div class="tiles-grid">
       {#each batch.tiles as tile}
-        <TileCard {tile} batchId={batch.batchId} {baseURL} />
+        <TileCard {tile} batchId={batch.batchId} {baseURL} {prefixText} {suffixText} />
       {/each}
     </div>
   {/if}
@@ -143,7 +166,18 @@
     gap: 1rem;
   }
 
-  .url-config {
+  .url-config,
+  .text-config {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .text-config {
+    gap: 1rem;
+  }
+
+  .text-input-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;

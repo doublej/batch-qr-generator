@@ -6,23 +6,26 @@
     tile: TileMapping
     batchId: string
     baseURL: string
+    prefixText: string
+    suffixText: string
   }
 
-  let { tile, batchId, baseURL }: Props = $props()
+  let { tile, batchId, baseURL, prefixText, suffixText }: Props = $props()
   let qrCode = $state('')
   let loading = $state(true)
   let downloading = $state(false)
 
   async function handleDownload() {
     downloading = true
-    await downloadQR(tile, batchId, baseURL)
+    await downloadQR(tile, batchId, baseURL, prefixText, suffixText)
     downloading = false
   }
 
   $effect(() => {
     loading = true
     const url = getTileURL(tile.secure_id, baseURL)
-    generateQRDataURL(url).then(result => {
+    const tileLabel = getTileLabel(batchId, tile.tile_number)
+    generateQRDataURL(url, { tileLabel, prefixText, suffixText }).then(result => {
       qrCode = result
       loading = false
     })
@@ -68,15 +71,14 @@
   }
 
   .qr-container {
-    width: 200px;
-    height: 200px;
+    min-height: 200px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
   .qr-container img {
-    width: 100%;
+    max-width: 100%;
     height: auto;
   }
 
