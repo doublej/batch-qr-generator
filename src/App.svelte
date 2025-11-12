@@ -19,6 +19,7 @@
     createSession
   } from './lib/sessionStorage'
   import SessionSelector from './components/SessionSelector.svelte'
+  import LanguageSwitcher from './components/LanguageSwitcher.svelte'
   import { _ } from './lib/i18n'
 
   let initialized = $state(false)
@@ -173,13 +174,16 @@
         <h1 class="text-3xl font-bold tracking-tight">{$_('app.title')}</h1>
         <p class="text-muted-foreground">{$_('app.description')}</p>
       </div>
-      {#if currentSessionId}
-        <SessionSelector
-          {currentSessionId}
-          onSessionChange={handleSessionChange}
-          onSessionCreated={handleSessionCreated}
-        />
-      {/if}
+      <div class="flex items-center gap-2">
+        <LanguageSwitcher />
+        {#if currentSessionId}
+          <SessionSelector
+            {currentSessionId}
+            onSessionChange={handleSessionChange}
+            onSessionCreated={handleSessionCreated}
+          />
+        {/if}
+      </div>
     </div>
 
     <Tabs.Root bind:value={currentTab}>
