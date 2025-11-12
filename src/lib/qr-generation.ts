@@ -1,4 +1,4 @@
-import QRCodeStyling from 'qr-code-styling'
+import { generateQRCodeSVG } from '../qrcode'
 import type { QRDesignOptions, QRPadding } from './config'
 import { calculateLogoPosition } from './logo-utils'
 import { getEstimatedModuleCount, getPixelsPerModule } from './qr-dimensions'
@@ -10,49 +10,16 @@ interface GenerateQRParams {
   tileLabel?: string
 }
 
-function createQRConfig(text: string, options: QRDesignOptions, format: 'canvas' | 'svg') {
-  const { qr, logo, colors, gradient } = options
-  const shouldCenterLogo = logo.placement === 'center'
+function createBasicQRSVG(text: string, options: QRDesignOptions): SVGElement {
+  const { qr, colors } = options
+  const eclMap = { L: 'L', M: 'M', Q: 'Q', H: 'H' } as const
 
-  const dotsColor = gradient.enabled ? {
-    type: gradient.type,
-    rotation: (gradient.angle ?? 0) * Math.PI / 180,
-    colorStops: [
-      { offset: 0, color: gradient.start },
-      { offset: 1, color: gradient.end }
-    ]
-  } : colors.dataModuleColor
-
-  return new QRCodeStyling({
-    width: qr.size,
-    height: qr.size,
-    type: format,
-    data: text,
-    image: shouldCenterLogo && logo.enabled ? logo.dataURL || undefined : undefined,
-    margin: 0,
-    qrOptions: {
-      errorCorrectionLevel: qr.errorCorrection
-    },
-    imageOptions: {
-      hideBackgroundDots: true,
-      imageSize: logo.size / qr.size,
-      margin: 5
-    },
-    dotsOptions: {
-      color: dotsColor as any,
-      type: qr.moduleShape
-    },
-    cornersSquareOptions: {
-      color: colors.eyeColor,
-      type: qr.moduleShape
-    },
-    cornersDotOptions: {
-      color: colors.eyeColor,
-      type: qr.moduleShape
-    },
-    backgroundOptions: {
-      color: colors.background
-    }
+  return generateQRCodeSVG({
+    msg: text,
+    ecl: eclMap[qr.errorCorrection],
+    pal: [colors.dataModuleColor, colors.background],
+    dim: qr.size,
+    pad: 0
   })
 }
 
@@ -182,30 +149,27 @@ function addTextLabel(
   return finalCanvas
 }
 
-async function generatePNG(text: string, options: QRDesignOptions, tileLabel?: string): Promise<string> {
-  const qrCode = createQRConfig(text, options, 'canvas')
-  const blob = await qrCode.getRawData('png')
-  if (!blob) throw new Error('Failed to generate QR code')
-
+async function svgToCanvas(svgElement: SVGElement): Promise<HTMLCanvasElement> {
+  const svgString = new XMLSerializer().serializeToString(svgElement)
   const canvas = document.createElement('canvas')
-  canvas.width = options.qr.size
-  canvas.height = options.qr.size
+  const img = new Image()
 
-  await new Promise<void>((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const img = new Image()
-      img.onload = () => {
-        const ctx = canvas.getContext('2d')!
-        ctx.drawImage(img, 0, 0)
-        resolve()
-      }
-      img.onerror = reject
-      img.src = reader.result as string
+  return new Promise((resolve, reject) => {
+    img.onload = () => {
+      canvas.width = img.width
+      canvas.height = img.height
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0)
+      resolve(canvas)
     }
-    reader.onerror = reject
-    reader.readAsDataURL(blob as Blob)
+    img.onerror = reject
+    img.src = 'data:image/svg+xml;base64,' + btoa(svgString)
   })
+}
+
+async function generatePNG(text: string, options: QRDesignOptions, tileLabel?: string): Promise<string> {
+  const svgElement = createBasicQRSVG(text, options)
+  const canvas = await svgToCanvas(svgElement)
 
   if (options.logo.enabled && options.logo.dataURL && options.logo.placement !== 'center') {
     await addNonCenterLogo(
@@ -263,11 +227,8 @@ function applySVGPadding(svgString: string, padding: QRPadding, backgroundColor:
 }
 
 async function generateSVG(text: string, options: QRDesignOptions, tileLabel?: string): Promise<string> {
-  const qrCode = createQRConfig(text, options, 'svg')
-  const blob = await qrCode.getRawData('svg')
-  if (!blob) throw new Error('Failed to generate QR SVG')
-
-  let svgString = await (blob as Blob).text()
+  const svgElement = createBasicQRSVG(text, options)
+  let svgString = new XMLSerializer().serializeToString(svgElement)
 
   if (options.logo.enabled && options.logo.dataURL && options.logo.placement !== 'center') {
     const { x, y } = calculateLogoPosition(

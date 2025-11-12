@@ -1,4 +1,4 @@
-import QRCodeStyling from 'qr-code-styling'
+import { generateQRCodeSVG } from './qrcode'
 import JSZip from 'jszip'
 import jsPDF from 'jspdf'
 import type { TileBatch, TileMapping, CSVData } from './types'
@@ -96,119 +96,80 @@ interface QROptions {
 }
 
 
+async function svgToCanvas(svgElement: SVGElement): Promise<HTMLCanvasElement> {
+  const svgString = new XMLSerializer().serializeToString(svgElement)
+  const canvas = document.createElement('canvas')
+  const img = new Image()
+
+  return new Promise((resolve, reject) => {
+    img.onload = () => {
+      canvas.width = img.width
+      canvas.height = img.height
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0)
+      resolve(canvas)
+    }
+    img.onerror = reject
+    img.src = 'data:image/svg+xml;base64,' + btoa(svgString)
+  })
+}
+
 export async function generateQRDataURL(text: string, options?: QROptions): Promise<string> {
   const qrSize = options?.qrSize || 300
   const padding = options?.qrPadding ?? { top: 16, right: 16, bottom: 16, left: 16 }
-  const moduleShape = options?.moduleShape || 'square'
-  const useGradient = options?.useGradient || false
+  const eclMap = { L: 'L', M: 'M', Q: 'Q', H: 'H' } as const
 
-  const dotsColor = useGradient ? {
-    type: options?.gradientType || 'linear',
-    rotation: (options?.gradientAngle ?? 0) * Math.PI / 180,
-    colorStops: [
-      { offset: 0, color: options?.gradientStart || '#000000' },
-      { offset: 1, color: options?.gradientEnd || '#666666' }
-    ]
-  } : options?.dataModuleColor || '#000000'
-
-  const logoPlacement = options?.logoPlacement || 'center'
-  const shouldCenterLogo = logoPlacement === 'center'
-
-  const qrCode = new QRCodeStyling({
-    width: qrSize,
-    height: qrSize,
-    type: 'canvas',
-    data: text,
-    image: shouldCenterLogo ? (options?.logoDataURL || undefined) : undefined,
-    margin: 0,
-    qrOptions: {
-      errorCorrectionLevel: options?.errorCorrectionLevel || 'M'
-    },
-    imageOptions: {
-      hideBackgroundDots: true,
-      imageSize: (options?.logoSize || 60) / qrSize,
-      margin: 5
-    },
-    dotsOptions: {
-      color: dotsColor as any,
-      type: moduleShape
-    },
-    cornersSquareOptions: {
-      color: options?.eyeColor || '#000000',
-      type: moduleShape
-    },
-    cornersDotOptions: {
-      color: options?.eyeColor || '#000000',
-      type: moduleShape
-    },
-    backgroundOptions: {
-      color: options?.backgroundColor || '#FFFFFF'
-    }
+  const svgElement = generateQRCodeSVG({
+    msg: text,
+    ecl: eclMap[options?.errorCorrectionLevel || 'M'],
+    pal: [options?.dataModuleColor || '#000000', options?.backgroundColor || '#FFFFFF'],
+    dim: qrSize,
+    pad: 0
   })
 
-  const canvas = document.createElement('canvas')
-  await qrCode.getRawData('png').then(blob => {
-    if (!blob) throw new Error('Failed to generate QR code')
-    return new Promise<void>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        const img = new Image()
-        img.onload = () => {
-          canvas.width = qrSize
-          canvas.height = qrSize
-          const ctx = canvas.getContext('2d')!
-          ctx.drawImage(img, 0, 0)
+  const canvas = await svgToCanvas(svgElement)
+  const ctx = canvas.getContext('2d')!
 
-          if (!shouldCenterLogo && options?.logoDataURL) {
-            const logoImg = new Image()
-            logoImg.onload = () => {
-              let logoSize = options.logoSize || 60
+  if (options?.logoDataURL) {
+    const logoImg = new Image()
+    await new Promise<void>((resolve, reject) => {
+      logoImg.onload = () => {
+        let logoSize = options.logoSize || 60
+        const maxLogoSize = qrSize * 0.3
+        logoSize = Math.min(logoSize, maxLogoSize)
+        const edgeMargin = 15
+        const logoPlacement = options.logoPlacement || 'center'
 
-              // Ensure logo size doesn't exceed QR size
-              const maxLogoSize = qrSize * 0.3 // Max 30% of QR size
-              logoSize = Math.min(logoSize, maxLogoSize)
+        let logoX = 0
+        let logoY = 0
 
-              // Fixed margin from edges (sufficient to avoid eye patterns)
-              const edgeMargin = 15
-
-              // Calculate position ensuring logo stays within QR bounds
-              let logoX = 0
-              let logoY = 0
-
-              if (logoPlacement === 'top-left') {
-                logoX = edgeMargin
-                logoY = edgeMargin
-              } else if (logoPlacement === 'top-right') {
-                logoX = Math.max(edgeMargin, qrSize - logoSize - edgeMargin)
-                logoY = edgeMargin
-              } else if (logoPlacement === 'bottom-left') {
-                logoX = edgeMargin
-                logoY = Math.max(edgeMargin, qrSize - logoSize - edgeMargin)
-              } else if (logoPlacement === 'bottom-right') {
-                logoX = Math.max(edgeMargin, qrSize - logoSize - edgeMargin)
-                logoY = Math.max(edgeMargin, qrSize - logoSize - edgeMargin)
-              }
-
-              // Final boundary check to absolutely ensure logo stays within canvas
-              logoX = Math.max(0, Math.min(logoX, qrSize - logoSize))
-              logoY = Math.max(0, Math.min(logoY, qrSize - logoSize))
-
-              ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize)
-              resolve()
-            }
-            logoImg.onerror = reject
-            logoImg.src = options.logoDataURL
-          } else {
-            resolve()
-          }
+        if (logoPlacement === 'center') {
+          logoX = (qrSize - logoSize) / 2
+          logoY = (qrSize - logoSize) / 2
+        } else if (logoPlacement === 'top-left') {
+          logoX = edgeMargin
+          logoY = edgeMargin
+        } else if (logoPlacement === 'top-right') {
+          logoX = Math.max(edgeMargin, qrSize - logoSize - edgeMargin)
+          logoY = edgeMargin
+        } else if (logoPlacement === 'bottom-left') {
+          logoX = edgeMargin
+          logoY = Math.max(edgeMargin, qrSize - logoSize - edgeMargin)
+        } else if (logoPlacement === 'bottom-right') {
+          logoX = Math.max(edgeMargin, qrSize - logoSize - edgeMargin)
+          logoY = Math.max(edgeMargin, qrSize - logoSize - edgeMargin)
         }
-        img.onerror = reject
-        img.src = reader.result as string
+
+        logoX = Math.max(0, Math.min(logoX, qrSize - logoSize))
+        logoY = Math.max(0, Math.min(logoY, qrSize - logoSize))
+
+        ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize)
+        resolve()
       }
-      reader.onerror = reject
-      reader.readAsDataURL(blob)
+      logoImg.onerror = reject
+      logoImg.src = options.logoDataURL
     })
-  })
+  }
 
   let finalCanvas = canvas
 
@@ -425,56 +386,19 @@ export function downloadCSV(batch: TileBatch): void {
 export async function generateQRSVG(text: string, options?: QROptions): Promise<string> {
   const qrSize = options?.qrSize || 300
   const padding = options?.qrPadding ?? { top: 16, right: 16, bottom: 16, left: 16 }
-  const moduleShape = options?.moduleShape || 'square'
-  const useGradient = options?.useGradient || false
-  const logoPlacement = options?.logoPlacement || 'center'
-  const shouldCenterLogo = logoPlacement === 'center'
+  const eclMap = { L: 'L', M: 'M', Q: 'Q', H: 'H' } as const
 
-  const dotsColor = useGradient ? {
-    type: options?.gradientType || 'linear',
-    rotation: (options?.gradientAngle ?? 0) * Math.PI / 180,
-    colorStops: [
-      { offset: 0, color: options?.gradientStart || '#000000' },
-      { offset: 1, color: options?.gradientEnd || '#666666' }
-    ]
-  } : options?.dataModuleColor || '#000000'
-
-  const qrCode = new QRCodeStyling({
-    width: qrSize,
-    height: qrSize,
-    type: 'svg',
-    data: text,
-    image: shouldCenterLogo ? (options?.logoDataURL || undefined) : undefined,
-    margin: 0,
-    qrOptions: {
-      errorCorrectionLevel: options?.errorCorrectionLevel || 'M'
-    },
-    imageOptions: {
-      hideBackgroundDots: true,
-      imageSize: (options?.logoSize || 60) / qrSize,
-      margin: 5
-    },
-    dotsOptions: {
-      color: dotsColor as any,
-      type: moduleShape
-    },
-    cornersSquareOptions: {
-      color: options?.eyeColor || '#000000',
-      type: moduleShape
-    },
-    cornersDotOptions: {
-      color: options?.eyeColor || '#000000',
-      type: moduleShape
-    },
-    backgroundOptions: {
-      color: options?.backgroundColor || '#FFFFFF'
-    }
+  const svgElement = generateQRCodeSVG({
+    msg: text,
+    ecl: eclMap[options?.errorCorrectionLevel || 'M'],
+    pal: [options?.dataModuleColor || '#000000', options?.backgroundColor || '#FFFFFF'],
+    dim: qrSize,
+    pad: 0
   })
 
-  const blob = await qrCode.getRawData('svg')
-  if (!blob) throw new Error('Failed to generate QR SVG')
-
-  let svgString = await blob.text()
+  let svgString = new XMLSerializer().serializeToString(svgElement)
+  const logoPlacement = options?.logoPlacement || 'center'
+  const shouldCenterLogo = logoPlacement === 'center'
 
   if (!shouldCenterLogo && options?.logoDataURL) {
     const logoSize = options.logoSize || 60
