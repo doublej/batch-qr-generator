@@ -14,3 +14,13 @@ export interface TileBatch {
   uuid: string
   tiles: TileMapping[]
 }
+
+export interface CSVData {
+  headers: string[]
+  rows: Record<string, string>[]
+}
+
+export interface VariableTemplate {
+  pattern: string
+  selectedVariables: string[]
+}

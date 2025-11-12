@@ -1,6 +1,13 @@
+export interface QRMargin {
+  top: number
+  right: number
+  bottom: number
+  left: number
+}
+
 export interface QRConfig {
   size: number
-  margin: number
+  margin: QRMargin
   errorCorrection: 'L' | 'M' | 'Q' | 'H'
   dpi: number
   moduleShape: 'square' | 'dots'
@@ -16,8 +23,9 @@ export interface LogoConfig {
 export interface TextConfig {
   enabled: boolean
   size: number
-  margin: number
-  position: 'top' | 'bottom'
+  position: 'top' | 'bottom' | 'left' | 'right'
+  offsetX: number
+  offsetY: number
   align: 'left' | 'center' | 'right'
   font: string
   weight: 'normal' | 'bold'
@@ -53,7 +61,12 @@ export interface QRDesignOptions {
 export const defaultQRDesign: QRDesignOptions = {
   qr: {
     size: 300,
-    margin: 16,
+    margin: {
+      top: 16,
+      right: 16,
+      bottom: 16,
+      left: 16
+    },
     errorCorrection: 'M',
     dpi: 300,
     moduleShape: 'square'
@@ -67,8 +80,9 @@ export const defaultQRDesign: QRDesignOptions = {
   text: {
     enabled: true,
     size: 16,
-    margin: 20,
     position: 'bottom',
+    offsetX: 0,
+    offsetY: 0,
     align: 'center',
     font: 'system-ui',
     weight: 'normal',

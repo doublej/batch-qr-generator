@@ -9,14 +9,19 @@
   let { config = $bindable() }: { config: TextConfig } = $props()
 
   let sizeArray = $state([config.size])
-  let marginArray = $state([config.margin])
+  let offsetXArray = $state([config.offsetX])
+  let offsetYArray = $state([config.offsetY])
 
   $effect(() => {
     config.size = sizeArray[0]
   })
 
   $effect(() => {
-    config.margin = marginArray[0]
+    config.offsetX = offsetXArray[0]
+  })
+
+  $effect(() => {
+    config.offsetY = offsetYArray[0]
   })
 </script>
 
@@ -37,6 +42,8 @@
         >
           <option value="top">Above QR Code</option>
           <option value="bottom">Below QR Code</option>
+          <option value="left">Left of QR Code</option>
+          <option value="right">Right of QR Code</option>
         </select>
       </div>
 
@@ -49,10 +56,18 @@
       </div>
 
       <div class="space-y-2">
-        <Label for="text-margin">Text Margin</Label>
+        <Label for="text-offset-x">Horizontal Offset</Label>
         <div class="flex items-center gap-2">
-          <Slider id="text-margin" bind:value={marginArray} min={0} max={40} step={1} class="flex-1" />
-          <span class="text-sm font-mono w-12 text-right">{marginArray[0]}%</span>
+          <Slider id="text-offset-x" bind:value={offsetXArray} min={-100} max={100} step={1} class="flex-1" />
+          <span class="text-sm font-mono w-12 text-right">{offsetXArray[0]}px</span>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <Label for="text-offset-y">Vertical Offset</Label>
+        <div class="flex items-center gap-2">
+          <Slider id="text-offset-y" bind:value={offsetYArray} min={-100} max={100} step={1} class="flex-1" />
+          <span class="text-sm font-mono w-12 text-right">{offsetYArray[0]}px</span>
         </div>
       </div>
 

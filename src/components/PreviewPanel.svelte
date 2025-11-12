@@ -1,67 +1,175 @@
 <script lang="ts">
-  import type { TileBatch } from '../types'
+  import type { CSVData } from '../types'
   import type { QRDesignOptions } from '$lib/config'
-  import { getTileURL, getTileLabel } from '$lib/export-handlers'
-  import { generateQR } from '$lib/qr-generation'
+  import { replaceVariables } from '../lib/csv-parser'
+  import { generateQRDataURL } from '../utils'
   import { Card, CardContent } from '$lib/components/ui/card'
   import { Button } from '$lib/components/ui/button'
 
   let {
-    batch,
-    options,
-    baseURL
+    csvData,
+    urlPattern,
+    labelPattern,
+    selectedVariables,
+    mode,
+    options
   }: {
-    batch: TileBatch | null
+    csvData: CSVData | null
+    urlPattern: string
+    labelPattern: string
+    selectedVariables: Set<string>
+    mode: 'single' | 'batch'
     options: QRDesignOptions
-    baseURL: string
   } = $props()
 
   let previewQR = $state<string>('')
   let previewLoading = $state(false)
   let previewIndex = $state(0)
   let dpi = $state(300)
+  let currentURL = $state<string>('')
 
   function nextPreview() {
-    if (!batch) return
-    previewIndex = (previewIndex + 1) % batch.tiles.length
+    if (!csvData) return
+    previewIndex = (previewIndex + 1) % csvData.rows.length
   }
 
   function prevPreview() {
-    if (!batch) return
-    previewIndex = (previewIndex - 1 + batch.tiles.length) % batch.tiles.length
+    if (!csvData) return
+    previewIndex = (previewIndex - 1 + csvData.rows.length) % csvData.rows.length
   }
 
   async function updatePreview() {
-    if (!batch) return
-    previewLoading = true
-    const tile = batch.tiles[previewIndex]
-    const url = getTileURL(tile.secure_id, baseURL)
-    const tileLabel = getTileLabel(batch.batchId, tile.tile_number, batch.totalTiles)
-    const dataUrl = await generateQR({ text: url, format: 'png', options, tileLabel })
-    previewQR = dataUrl
-    previewLoading = false
+    if (mode === 'single') {
+      if (!urlPattern) {
+        previewQR = ''
+        currentURL = ''
+        return
+      }
+
+      previewLoading = true
+      currentURL = urlPattern
+
+      try {
+        const dataUrl = await generateQRDataURL(urlPattern, {
+          tileLabel: labelPattern,
+          errorCorrectionLevel: options.qr.errorCorrectionLevel,
+          logoDataURL: options.logo.enabled ? options.logo.dataURL : '',
+          logoSize: options.logo.size,
+          logoPlacement: options.logo.placement,
+          textSize: options.text.size,
+          textPosition: options.text.position,
+          textOffsetX: options.text.offsetX,
+          textOffsetY: options.text.offsetY,
+          showTileLabel: options.text.enabled,
+          textAlign: options.text.align,
+          textFont: options.text.font,
+          textWeight: options.text.weight,
+          textColor: options.text.color,
+          textRotation: options.text.rotation,
+          qrSize: options.qr.size,
+          qrMargin: options.qr.margin,
+          moduleShape: options.qr.moduleShape,
+          eyeColor: options.colors.eyeColor,
+          dataModuleColor: options.colors.dataModuleColor,
+          useGradient: options.gradient.enabled,
+          gradientType: options.gradient.type,
+          gradientStart: options.gradient.startColor,
+          gradientEnd: options.gradient.endColor,
+          gradientAngle: options.gradient.angle
+        })
+
+        previewQR = dataUrl
+      } catch (error) {
+        console.error('Preview generation failed:', error)
+        previewQR = ''
+      } finally {
+        previewLoading = false
+      }
+    } else {
+      if (!csvData || csvData.rows.length === 0) {
+        previewQR = ''
+        currentURL = ''
+        return
+      }
+
+      previewLoading = true
+
+      try {
+        const row = csvData.rows[previewIndex]
+        const url = replaceVariables(urlPattern, row, previewIndex, csvData.rows.length)
+        const label = replaceVariables(labelPattern, row, previewIndex, csvData.rows.length)
+        currentURL = url
+
+        const dataUrl = await generateQRDataURL(url, {
+          tileLabel: label,
+          errorCorrectionLevel: options.qr.errorCorrectionLevel,
+          logoDataURL: options.logo.enabled ? options.logo.dataURL : '',
+          logoSize: options.logo.size,
+          logoPlacement: options.logo.placement,
+          textSize: options.text.size,
+          textPosition: options.text.position,
+          textOffsetX: options.text.offsetX,
+          textOffsetY: options.text.offsetY,
+          showTileLabel: options.text.enabled,
+          textAlign: options.text.align,
+          textFont: options.text.font,
+          textWeight: options.text.weight,
+          textColor: options.text.color,
+          textRotation: options.text.rotation,
+          qrSize: options.qr.size,
+          qrMargin: options.qr.margin,
+          moduleShape: options.qr.moduleShape,
+          eyeColor: options.colors.eyeColor,
+          dataModuleColor: options.colors.dataModuleColor,
+          useGradient: options.gradient.enabled,
+          gradientType: options.gradient.type,
+          gradientStart: options.gradient.startColor,
+          gradientEnd: options.gradient.endColor,
+          gradientAngle: options.gradient.angle
+        })
+
+        previewQR = dataUrl
+      } catch (error) {
+        console.error('Preview generation failed:', error)
+        previewQR = ''
+      } finally {
+        previewLoading = false
+      }
+    }
   }
 
   function downloadPreview() {
-    if (!previewQR || !batch) return
-    const tile = batch.tiles[previewIndex]
-    const tileLabel = getTileLabel(batch.batchId, tile.tile_number, batch.totalTiles)
-    const link = document.createElement('a')
-    link.download = `${tileLabel}.png`
-    link.href = previewQR
-    link.click()
+    if (!previewQR) return
+
+    if (mode === 'single') {
+      const link = document.createElement('a')
+      link.download = `${labelPattern || 'qr-code'}.png`
+      link.href = previewQR
+      link.click()
+    } else if (csvData) {
+      const row = csvData.rows[previewIndex]
+      const label = replaceVariables(labelPattern, row)
+      const link = document.createElement('a')
+      link.download = `${label || `qr-${previewIndex + 1}`}.png`
+      link.href = previewQR
+      link.click()
+    }
   }
 
   $effect(() => {
-    if (batch) {
+    if (mode === 'single' && urlPattern) {
       updatePreview()
+    } else if (mode === 'batch' && csvData && urlPattern) {
+      updatePreview()
+    } else {
+      previewQR = ''
     }
   })
 </script>
 
 <Card class="sticky top-4">
   <CardContent class="pt-6">
-    {#if batch}
+    {#if mode === 'single' || csvData}
       <div class="space-y-4">
         {#if previewLoading}
           <div class="flex items-center justify-center py-12">
@@ -71,12 +179,20 @@
           <div class="space-y-4">
             <div class="flex items-center justify-between text-sm">
               <span class="text-muted-foreground">Live Preview</span>
-              <span class="font-mono">{String(previewIndex + 1).padStart(3, '0')}/{String(batch.totalTiles).padStart(3, '0')}</span>
+              {#if mode === 'batch' && csvData}
+                <span class="font-mono">{String(previewIndex + 1).padStart(3, '0')}/{String(csvData.rows.length).padStart(3, '0')}</span>
+              {/if}
             </div>
 
             <div class="relative rounded-lg border overflow-hidden" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 99px, rgba(0, 0, 0, 0.25) 99px, rgba(0, 0, 0, 0.25) 100px), repeating-linear-gradient(90deg, transparent, transparent 99px, rgba(0, 0, 0, 0.25) 99px, rgba(0, 0, 0, 0.25) 100px); background-size: 100px 100px;">
               <img src={previewQR} alt="Preview QR Code" class="w-full relative z-10" />
             </div>
+
+            {#if currentURL}
+              <div class="text-xs px-2 py-1.5 rounded bg-muted break-all">
+                <span class="font-semibold">QR CONTENTS:</span> {currentURL}
+              </div>
+            {/if}
 
             <div class="text-xs text-center text-muted-foreground space-y-1">
               <div>{options.qr.size}px × {options.qr.size}px (100px grid)</div>
@@ -94,24 +210,30 @@
             </div>
 
             <div class="space-y-2">
-              <div class="flex gap-2">
-                <Button variant="outline" size="sm" onclick={prevPreview} class="flex-1">
-                  Previous
-                </Button>
-                <Button variant="outline" size="sm" onclick={nextPreview} class="flex-1">
-                  Next
-                </Button>
-              </div>
+              {#if mode === 'batch' && csvData}
+                <div class="flex gap-2">
+                  <Button variant="outline" size="sm" onclick={prevPreview} class="flex-1">
+                    Previous
+                  </Button>
+                  <Button variant="outline" size="sm" onclick={nextPreview} class="flex-1">
+                    Next
+                  </Button>
+                </div>
+              {/if}
               <Button size="sm" onclick={downloadPreview} class="w-full">
                 Download
               </Button>
             </div>
           </div>
+        {:else}
+          <div class="flex items-center justify-center py-12">
+            <p class="text-muted-foreground text-center">Preview will appear here</p>
+          </div>
         {/if}
       </div>
     {:else}
       <div class="flex items-center justify-center py-12">
-        <p class="text-muted-foreground text-center">Select a batch to preview</p>
+        <p class="text-muted-foreground text-center">Configure input to preview</p>
       </div>
     {/if}
   </CardContent>

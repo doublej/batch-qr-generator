@@ -1,5 +1,5 @@
 import QRCodeStyling from 'qr-code-styling'
-import type { QRDesignOptions } from './config'
+import type { QRDesignOptions, QRMargin } from './config'
 import { calculateLogoPosition } from './logo-utils'
 
 interface GenerateQRParams {
@@ -28,7 +28,7 @@ function createQRConfig(text: string, options: QRDesignOptions, format: 'canvas'
     type: format,
     data: text,
     image: shouldCenterLogo && logo.enabled ? logo.dataURL || undefined : undefined,
-    margin: Math.floor(qr.margin),
+    margin: 0,
     qrOptions: {
       errorCorrectionLevel: qr.errorCorrection
     },
@@ -76,18 +76,69 @@ async function addNonCenterLogo(
   })
 }
 
+function detectContentBounds(canvas: HTMLCanvasElement) {
+  const ctx = canvas.getContext('2d')!
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+  const { data, width, height } = imageData
+
+  let minX = width, maxX = 0, minY = height, maxY = 0
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4
+      const r = data[i], g = data[i + 1], b = data[i + 2]
+
+      if (r < 255 || g < 255 || b < 255) {
+        if (x < minX) minX = x
+        if (x > maxX) maxX = x
+        if (y < minY) minY = y
+        if (y > maxY) maxY = y
+      }
+    }
+  }
+
+  return { minX, maxX, minY, maxY }
+}
+
+function applyMargin(canvas: HTMLCanvasElement, margin: QRMargin): HTMLCanvasElement {
+  if (margin.top === 0 && margin.right === 0 && margin.bottom === 0 && margin.left === 0) {
+    return canvas
+  }
+
+  const bounds = detectContentBounds(canvas)
+  const contentWidth = bounds.maxX - bounds.minX + 1
+  const contentHeight = bounds.maxY - bounds.minY + 1
+
+  const finalCanvas = document.createElement('canvas')
+  finalCanvas.width = contentWidth + margin.left + margin.right
+  finalCanvas.height = contentHeight + margin.top + margin.bottom
+
+  const ctx = finalCanvas.getContext('2d')!
+  ctx.fillStyle = 'white'
+  ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height)
+
+  ctx.drawImage(
+    canvas,
+    bounds.minX, bounds.minY, contentWidth, contentHeight,
+    margin.left, margin.top, contentWidth, contentHeight
+  )
+
+  return finalCanvas
+}
+
 function addTextLabel(
   canvas: HTMLCanvasElement,
   label: string,
   qrSize: number,
   textConfig: QRDesignOptions['text']
 ): HTMLCanvasElement {
-  const marginPercent = textConfig.margin / 100
-  const labelMargin = textConfig.margin === 0 ? 0 : Math.floor(qrSize * marginPercent)
   const lineHeight = textConfig.size * 1.5
-  const textHeight = lineHeight + labelMargin
-  const finalWidth = qrSize + labelMargin * 2
-  const finalHeight = qrSize + labelMargin * 2 + textHeight
+  const textSpacing = 10
+  const isHorizontal = textConfig.position === 'left' || textConfig.position === 'right'
+
+  const textSpace = lineHeight + textSpacing
+  const finalWidth = isHorizontal ? qrSize + qrSize : qrSize
+  const finalHeight = isHorizontal ? qrSize : qrSize + textSpace
 
   const finalCanvas = document.createElement('canvas')
   finalCanvas.width = finalWidth
@@ -97,20 +148,29 @@ function addTextLabel(
   ctx.fillStyle = 'white'
   ctx.fillRect(0, 0, finalWidth, finalHeight)
 
-  const qrY = textConfig.position === 'top' ? textHeight : labelMargin
-  ctx.drawImage(canvas, labelMargin, qrY)
+  const qrX = isHorizontal && textConfig.position === 'left' ? qrSize : 0
+  const qrY = textConfig.position === 'top' ? textSpace : 0
+  ctx.drawImage(canvas, qrX, qrY)
 
   ctx.fillStyle = textConfig.color
   ctx.font = `${textConfig.weight} ${textConfig.size}px ${textConfig.font}, sans-serif`
   ctx.textAlign = textConfig.align
 
-  let textX = finalWidth / 2
-  if (textConfig.align === 'left') textX = labelMargin
-  if (textConfig.align === 'right') textX = finalWidth - labelMargin
+  let textX = textConfig.offsetX
+  let textY = lineHeight * 0.8 + textConfig.offsetY
 
-  const textY = textConfig.position === 'top'
-    ? lineHeight * 0.8
-    : qrSize + labelMargin + labelMargin + lineHeight * 0.8
+  if (textConfig.position === 'bottom') {
+    textY = qrSize + textSpacing + lineHeight * 0.8 + textConfig.offsetY
+  } else if (textConfig.position === 'right') {
+    textX = qrSize + textConfig.offsetX
+    textY = qrSize / 2 + textConfig.offsetY
+  } else if (textConfig.position === 'left') {
+    textX = qrSize / 2 + textConfig.offsetX
+    textY = qrSize / 2 + textConfig.offsetY
+  }
+
+  if (textConfig.align === 'center') textX = finalWidth / 2 + textConfig.offsetX
+  if (textConfig.align === 'right' && !isHorizontal) textX = finalWidth + textConfig.offsetX
 
   if (textConfig.rotation !== 0) {
     ctx.save()
@@ -160,11 +220,44 @@ async function generatePNG(text: string, options: QRDesignOptions, tileLabel?: s
     )
   }
 
-  const finalCanvas = tileLabel && options.text.enabled
+  let finalCanvas = tileLabel && options.text.enabled
     ? addTextLabel(canvas, tileLabel, options.qr.size, options.text)
     : canvas
 
+  finalCanvas = applyMargin(finalCanvas, {
+    top: Math.floor(options.qr.margin.top),
+    right: Math.floor(options.qr.margin.right),
+    bottom: Math.floor(options.qr.margin.bottom),
+    left: Math.floor(options.qr.margin.left)
+  })
+
   return finalCanvas.toDataURL()
+}
+
+function applySVGMargin(svgString: string, margin: QRMargin): string {
+  if (margin.top === 0 && margin.right === 0 && margin.bottom === 0 && margin.left === 0) {
+    return svgString
+  }
+
+  const widthMatch = svgString.match(/width="([^"]+)"/)
+  const heightMatch = svgString.match(/height="([^"]+)"/)
+
+  if (!widthMatch || !heightMatch) return svgString
+
+  const width = Number(widthMatch[1])
+  const height = Number(heightMatch[1])
+
+  const newWidth = width + margin.left + margin.right
+  const newHeight = height + margin.top + margin.bottom
+
+  const innerSvg = svgString.replace(/<svg[^>]*>/, '').replace('</svg>', '')
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${newWidth} ${newHeight}" width="${newWidth}" height="${newHeight}">
+  <rect width="${newWidth}" height="${newHeight}" fill="white"/>
+  <g transform="translate(${margin.left}, ${margin.top})">
+    ${innerSvg}
+  </g>
+</svg>`
 }
 
 async function generateSVG(text: string, options: QRDesignOptions, tileLabel?: string): Promise<string> {
@@ -187,30 +280,45 @@ async function generateSVG(text: string, options: QRDesignOptions, tileLabel?: s
   }
 
   if (!tileLabel || !options.text.enabled) {
-    return svgString
+    return applySVGMargin(svgString, {
+      top: Math.floor(options.qr.margin.top),
+      right: Math.floor(options.qr.margin.right),
+      bottom: Math.floor(options.qr.margin.bottom),
+      left: Math.floor(options.qr.margin.left)
+    })
   }
 
-  const marginPercent = options.text.margin / 100
-  const labelMargin = options.text.margin === 0 ? 0 : Math.floor(options.qr.size * marginPercent)
   const lineHeight = options.text.size * 1.5
-  const textHeight = lineHeight + labelMargin
-  const finalWidth = options.qr.size + labelMargin * 2
-  const finalHeight = options.qr.size + labelMargin * 2 + textHeight
+  const textSpacing = 10
+  const isHorizontal = options.text.position === 'left' || options.text.position === 'right'
+
+  const textSpace = lineHeight + textSpacing
+  const finalWidth = isHorizontal ? options.qr.size + options.qr.size : options.qr.size
+  const finalHeight = isHorizontal ? options.qr.size : options.qr.size + textSpace
 
   const innerSvg = svgString.replace(/<svg[^>]*>/, '').replace('</svg>', '')
-  const qrY = options.text.position === 'top' ? textHeight : labelMargin
-  const textY = options.text.position === 'top'
-    ? lineHeight * 0.8
-    : options.qr.size + labelMargin + labelMargin + lineHeight * 0.8
+  const qrX = isHorizontal && options.text.position === 'left' ? options.qr.size : 0
+  const qrY = options.text.position === 'top' ? textSpace : 0
 
-  let textX = finalWidth / 2
-  let textAnchor = 'middle'
-  if (options.text.align === 'left') {
-    textX = labelMargin
-    textAnchor = 'start'
+  let textX = options.text.offsetX
+  let textY = lineHeight * 0.8 + options.text.offsetY
+
+  if (options.text.position === 'bottom') {
+    textY = options.qr.size + textSpacing + lineHeight * 0.8 + options.text.offsetY
+  } else if (options.text.position === 'right') {
+    textX = options.qr.size + options.text.offsetX
+    textY = options.qr.size / 2 + options.text.offsetY
+  } else if (options.text.position === 'left') {
+    textX = options.qr.size / 2 + options.text.offsetX
+    textY = options.qr.size / 2 + options.text.offsetY
   }
-  if (options.text.align === 'right') {
-    textX = finalWidth - labelMargin
+
+  let textAnchor = 'start'
+  if (options.text.align === 'center') {
+    textX = finalWidth / 2 + options.text.offsetX
+    textAnchor = 'middle'
+  } else if (options.text.align === 'right' && !isHorizontal) {
+    textX = finalWidth + options.text.offsetX
     textAnchor = 'end'
   }
 
@@ -219,13 +327,20 @@ async function generateSVG(text: string, options: QRDesignOptions, tileLabel?: s
     ? `transform="rotate(${options.text.rotation} ${textX} ${textY})"`
     : ''
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${finalWidth} ${finalHeight}" width="${finalWidth}" height="${finalHeight}">
+  const svgWithText = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${finalWidth} ${finalHeight}" width="${finalWidth}" height="${finalHeight}">
   <rect width="${finalWidth}" height="${finalHeight}" fill="white"/>
-  <g transform="translate(${labelMargin}, ${qrY})">
+  <g transform="translate(${qrX}, ${qrY})">
     ${innerSvg}
   </g>
   <text x="${textX}" y="${textY}" font-family="${options.text.font}, sans-serif" font-size="${options.text.size}" ${fontWeightAttr} text-anchor="${textAnchor}" fill="${options.text.color}" ${rotateAttr}>${tileLabel}</text>
 </svg>`
+
+  return applySVGMargin(svgWithText, {
+    top: Math.floor(options.qr.margin.top),
+    right: Math.floor(options.qr.margin.right),
+    bottom: Math.floor(options.qr.margin.bottom),
+    left: Math.floor(options.qr.margin.left)
+  })
 }
 
 export async function generateQR({ text, format, options, tileLabel }: GenerateQRParams): Promise<string> {

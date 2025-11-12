@@ -6,14 +6,29 @@
   let { config = $bindable() }: { config: QRConfig } = $props()
 
   let sizeArray = $state([config.size])
-  let marginArray = $state([config.margin])
+  let marginTopArray = $state([config.margin.top])
+  let marginRightArray = $state([config.margin.right])
+  let marginBottomArray = $state([config.margin.bottom])
+  let marginLeftArray = $state([config.margin.left])
 
   $effect(() => {
     config.size = sizeArray[0]
   })
 
   $effect(() => {
-    config.margin = marginArray[0]
+    config.margin.top = marginTopArray[0]
+  })
+
+  $effect(() => {
+    config.margin.right = marginRightArray[0]
+  })
+
+  $effect(() => {
+    config.margin.bottom = marginBottomArray[0]
+  })
+
+  $effect(() => {
+    config.margin.left = marginLeftArray[0]
   })
 </script>
 
@@ -27,10 +42,36 @@
   </div>
 
   <div class="space-y-2">
-    <Label for="qr-margin">Margin</Label>
-    <div class="flex items-center gap-2">
-      <Slider id="qr-margin" bind:value={marginArray} min={0} max={100} step={1} class="flex-1" />
-      <span class="text-sm font-mono w-16 text-right">{marginArray[0]}px</span>
+    <Label>Margin</Label>
+    <div class="grid grid-cols-2 gap-3">
+      <div class="space-y-1">
+        <Label for="margin-top" class="text-xs text-muted-foreground">Top</Label>
+        <div class="flex items-center gap-2">
+          <Slider id="margin-top" bind:value={marginTopArray} min={0} max={100} step={1} class="flex-1" />
+          <span class="text-xs font-mono w-10 text-right">{marginTopArray[0]}px</span>
+        </div>
+      </div>
+      <div class="space-y-1">
+        <Label for="margin-right" class="text-xs text-muted-foreground">Right</Label>
+        <div class="flex items-center gap-2">
+          <Slider id="margin-right" bind:value={marginRightArray} min={0} max={100} step={1} class="flex-1" />
+          <span class="text-xs font-mono w-10 text-right">{marginRightArray[0]}px</span>
+        </div>
+      </div>
+      <div class="space-y-1">
+        <Label for="margin-bottom" class="text-xs text-muted-foreground">Bottom</Label>
+        <div class="flex items-center gap-2">
+          <Slider id="margin-bottom" bind:value={marginBottomArray} min={0} max={100} step={1} class="flex-1" />
+          <span class="text-xs font-mono w-10 text-right">{marginBottomArray[0]}px</span>
+        </div>
+      </div>
+      <div class="space-y-1">
+        <Label for="margin-left" class="text-xs text-muted-foreground">Left</Label>
+        <div class="flex items-center gap-2">
+          <Slider id="margin-left" bind:value={marginLeftArray} min={0} max={100} step={1} class="flex-1" />
+          <span class="text-xs font-mono w-10 text-right">{marginLeftArray[0]}px</span>
+        </div>
+      </div>
     </div>
   </div>
 
