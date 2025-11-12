@@ -5,6 +5,7 @@
   import { generateQRDataURL } from '../utils'
   import { Card, CardContent } from '$lib/components/ui/card'
   import { Button } from '$lib/components/ui/button'
+  import { Input } from '$lib/components/ui/input'
 
   let {
     csvData,
@@ -12,6 +13,7 @@
     labelPattern,
     selectedVariables,
     mode,
+    labelEnabled,
     options
   }: {
     csvData: CSVData | null
@@ -19,6 +21,7 @@
     labelPattern: string
     selectedVariables: Set<string>
     mode: 'single' | 'batch'
+    labelEnabled: boolean
     options: QRDesignOptions
   } = $props()
 
@@ -27,15 +30,18 @@
   let previewIndex = $state(0)
   let dpi = $state(300)
   let currentURL = $state<string>('')
+  let rowInputValue = $state<string>('1')
 
   function nextPreview() {
     if (!csvData) return
     previewIndex = (previewIndex + 1) % csvData.rows.length
+    rowInputValue = String(previewIndex + 1)
   }
 
   function prevPreview() {
     if (!csvData) return
     previewIndex = (previewIndex - 1 + csvData.rows.length) % csvData.rows.length
+    rowInputValue = String(previewIndex + 1)
   }
 
   async function updatePreview() {
@@ -51,7 +57,7 @@
 
       try {
         const dataUrl = await generateQRDataURL(urlPattern, {
-          tileLabel: labelPattern,
+          tileLabel: labelEnabled ? labelPattern : '',
           errorCorrectionLevel: options.qr.errorCorrectionLevel,
           logoDataURL: options.logo.enabled ? options.logo.dataURL : '',
           logoSize: options.logo.size,
@@ -101,7 +107,7 @@
         currentURL = url
 
         const dataUrl = await generateQRDataURL(url, {
-          tileLabel: label,
+          tileLabel: labelEnabled ? label : '',
           errorCorrectionLevel: options.qr.errorCorrectionLevel,
           logoDataURL: options.logo.enabled ? options.logo.dataURL : '',
           logoSize: options.logo.size,
@@ -156,6 +162,29 @@
     }
   }
 
+  function handleRowInput(event: Event) {
+    const input = event.target as HTMLInputElement
+    rowInputValue = input.value
+  }
+
+  function commitRowChange() {
+    if (!csvData) return
+    const rowNumber = parseInt(rowInputValue)
+
+    if (!isNaN(rowNumber) && rowNumber >= 1 && rowNumber <= csvData.rows.length) {
+      previewIndex = rowNumber - 1
+    } else {
+      rowInputValue = String(previewIndex + 1)
+    }
+  }
+
+  function handleRowKeydown(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      commitRowChange()
+      ;(event.target as HTMLInputElement).blur()
+    }
+  }
+
   $effect(() => {
     if (mode === 'single' && urlPattern) {
       updatePreview()
@@ -184,38 +213,50 @@
               {/if}
             </div>
 
-            <div class="relative rounded-lg border overflow-hidden" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 99px, rgba(0, 0, 0, 0.25) 99px, rgba(0, 0, 0, 0.25) 100px), repeating-linear-gradient(90deg, transparent, transparent 99px, rgba(0, 0, 0, 0.25) 99px, rgba(0, 0, 0, 0.25) 100px); background-size: 100px 100px;">
-              <img src={previewQR} alt="Preview QR Code" class="w-full relative z-10" />
+            <div class="relative border overflow-hidden p-4" style="border-radius: var(--radius-inner); background-image: repeating-conic-gradient(#9ca3af 0% 25%, #6b7280 0% 50%); background-size: 20px 20px; background-position: 0 0;">
+              <img src={previewQR} alt="Preview QR Code" class="w-full relative z-10" style="border-radius: var(--radius-nested);" />
             </div>
 
-            {#if currentURL}
-              <div class="text-xs px-2 py-1.5 rounded bg-muted break-all">
-                <span class="font-semibold">QR CONTENTS:</span> {currentURL}
-              </div>
-            {/if}
+            <div class="space-y-2 text-xs">
+              {#if currentURL}
+                <div class="break-all">
+                  {currentURL}
+                </div>
+              {/if}
 
-            <div class="text-xs text-center text-muted-foreground space-y-1">
-              <div>{options.qr.size}px × {options.qr.size}px (100px grid)</div>
-              <div class="flex items-center justify-center gap-2">
-                <span>Print: {((options.qr.size / dpi) * 25.4).toFixed(1)}mm × {((options.qr.size / dpi) * 25.4).toFixed(1)}mm @</span>
-                <select
-                  bind:value={dpi}
-                  class="h-6 rounded border border-input bg-background px-2 text-xs"
-                >
-                  <option value={72}>72 DPI</option>
-                  <option value={150}>150 DPI</option>
-                  <option value={300}>300 DPI</option>
-                </select>
+              <div class="text-muted-foreground space-y-1">
+                <div>{options.qr.size}px × {options.qr.size}px (100px grid)</div>
+                <div class="flex items-center gap-2">
+                  <span>Print: {((options.qr.size / dpi) * 25.4).toFixed(1)}mm × {((options.qr.size / dpi) * 25.4).toFixed(1)}mm @</span>
+                  <select
+                    bind:value={dpi}
+                    class="h-6 rounded border border-input bg-background px-2 text-xs"
+                  >
+                    <option value={72}>72 DPI</option>
+                    <option value={150}>150 DPI</option>
+                    <option value={300}>300 DPI</option>
+                  </select>
+                </div>
               </div>
             </div>
 
             <div class="space-y-2">
               {#if mode === 'batch' && csvData}
                 <div class="flex gap-2">
-                  <Button variant="outline" size="sm" onclick={prevPreview} class="flex-1">
+                  <Button variant="outline" size="sm" onclick={prevPreview} class="w-24">
                     Previous
                   </Button>
-                  <Button variant="outline" size="sm" onclick={nextPreview} class="flex-1">
+                  <Input
+                    type="number"
+                    min="1"
+                    max={csvData.rows.length}
+                    value={rowInputValue}
+                    oninput={handleRowInput}
+                    onblur={commitRowChange}
+                    onkeydown={handleRowKeydown}
+                    class="h-9 text-center"
+                  />
+                  <Button variant="outline" size="sm" onclick={nextPreview} class="w-24">
                     Next
                   </Button>
                 </div>

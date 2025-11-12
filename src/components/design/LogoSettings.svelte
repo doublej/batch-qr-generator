@@ -13,34 +13,7 @@
   } = $props()
 
   let logoSizeArray = $state([config.size])
-  let selectedLogoPath = $state<string>('')
-
-  const PROJECT_LOGOS = [
-    { path: '/logo.png', name: 'Logo' },
-    { path: '/inverted_logo.png', name: 'Inverted Logo' }
-  ]
-
-  async function handleLogoSelect(event: Event) {
-    const target = event.target as HTMLSelectElement
-    selectedLogoPath = target.value
-
-    if (selectedLogoPath === 'custom') {
-      config.dataURL = ''
-      return
-    }
-
-    if (selectedLogoPath) {
-      const response = await fetch(selectedLogoPath)
-      const blob = await response.blob()
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        config.dataURL = e.target?.result as string
-      }
-      reader.readAsDataURL(blob)
-    } else {
-      config.dataURL = ''
-    }
-  }
+  let selectedLogoPath = $state<string>('custom')
 
   function handleLogoUpload(event: Event) {
     const target = event.target as HTMLInputElement
@@ -58,13 +31,6 @@
   $effect(() => {
     config.size = logoSizeArray[0]
   })
-
-  $effect(() => {
-    if (config.enabled && !selectedLogoPath) {
-      selectedLogoPath = PROJECT_LOGOS[1].path
-      handleLogoSelect({ target: { value: selectedLogoPath } } as any)
-    }
-  })
 </script>
 
 <div class="space-y-4">
@@ -76,28 +42,15 @@
   {#if config.enabled}
     <div class="space-y-4">
       <div class="space-y-2">
-        <Label for="logo-select">Logo Source</Label>
-        <select
-          id="logo-select"
-          bind:value={selectedLogoPath}
-          onchange={handleLogoSelect}
-          class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-        >
-          {#each PROJECT_LOGOS as logo}
-            <option value={logo.path}>{logo.name}</option>
-          {/each}
-          <option value="custom">Custom Upload...</option>
-        </select>
-      </div>
-
-      {#if selectedLogoPath === 'custom'}
+        <Label for="logo-upload">Upload Logo</Label>
         <input
+          id="logo-upload"
           type="file"
           accept="image/png,image/jpeg,image/jpg"
           onchange={handleLogoUpload}
-          class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium"
         />
-      {/if}
+      </div>
 
       {#if config.dataURL}
         <div class="space-y-4">

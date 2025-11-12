@@ -3,28 +3,50 @@ import Papa from 'papaparse'
 export interface CSVData {
   headers: string[]
   rows: Record<string, string>[]
+  hasCustomHeaders?: boolean
 }
 
-export function parseCSV(file: File): Promise<CSVData> {
+export function parseCSV(file: File, firstRowIsHeader: boolean): Promise<CSVData> {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
-      header: true,
+      header: firstRowIsHeader,
       skipEmptyLines: true,
       complete: (results) => {
-        if (!results.meta.fields || results.meta.fields.length === 0) {
-          reject(new Error('No headers found in CSV'))
-          return
-        }
+        let headers: string[]
+        let rows: Record<string, string>[]
 
-        const headers = results.meta.fields
-        const rows = results.data as Record<string, string>[]
+        if (firstRowIsHeader) {
+          if (!results.meta.fields || results.meta.fields.length === 0) {
+            reject(new Error('No headers found in CSV'))
+            return
+          }
+          headers = results.meta.fields
+          rows = results.data as Record<string, string>[]
+        } else {
+          const rawRows = results.data as string[][]
+          if (rawRows.length === 0) {
+            reject(new Error('No data rows found in CSV'))
+            return
+          }
+
+          const columnCount = rawRows[0].length
+          headers = Array.from({ length: columnCount }, (_, i) => `col_${i + 1}`)
+
+          rows = rawRows.map(row => {
+            const obj: Record<string, string> = {}
+            headers.forEach((header, idx) => {
+              obj[header] = row[idx] || ''
+            })
+            return obj
+          })
+        }
 
         if (rows.length === 0) {
           reject(new Error('No data rows found in CSV'))
           return
         }
 
-        resolve({ headers, rows })
+        resolve({ headers, rows, hasCustomHeaders: !firstRowIsHeader })
       },
       error: (error) => {
         reject(new Error(`CSV parsing failed: ${error.message}`))

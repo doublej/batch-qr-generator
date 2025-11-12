@@ -18,12 +18,14 @@
     urlPattern,
     labelPattern,
     mode,
+    labelEnabled,
     options
   }: {
     csvData: CSVData | null
     urlPattern: string
     labelPattern: string
     mode: 'single' | 'batch'
+    labelEnabled: boolean
     options: QRDesignOptions
   } = $props()
 
@@ -34,7 +36,7 @@
 
     try {
       const dataUrl = await generateQRDataURL(urlPattern, {
-        tileLabel: labelPattern,
+        tileLabel: labelEnabled ? labelPattern : '',
         errorCorrectionLevel: options.qr.errorCorrectionLevel,
         logoDataURL: options.logo.enabled ? options.logo.dataURL : '',
         logoSize: options.logo.size,

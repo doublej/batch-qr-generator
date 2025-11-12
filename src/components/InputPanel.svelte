@@ -1,32 +1,26 @@
 <script lang="ts">
   import type { CSVData } from '../types'
-  import { parseCSV, replaceVariables } from '../lib/csv-parser'
+  import { parseCSV } from '../lib/csv-parser'
   import { Card, CardContent } from '$lib/components/ui/card'
   import { Label } from '$lib/components/ui/label'
-  import { Input } from '$lib/components/ui/input'
   import { Checkbox } from '$lib/components/ui/checkbox'
-  import { Separator } from '$lib/components/ui/separator'
-  import VariablePillInput from './VariablePillInput.svelte'
+  import { Button } from '$lib/components/ui/button'
   import * as Tabs from '$lib/components/ui/tabs'
 
   let {
     csvData = $bindable(),
-    urlPattern = $bindable(),
-    labelPattern = $bindable(),
-    selectedVariables = $bindable(),
-    mode = $bindable()
+    mode = $bindable(),
+    onClearState
   }: {
     csvData: CSVData | null
-    urlPattern: string
-    labelPattern: string
-    selectedVariables: Set<string>
     mode: 'single' | 'batch'
+    onClearState: () => void
   } = $props()
 
   let loading = $state(false)
   let fileName = $state('')
-  let singleURL = $state('https://example.com/example123')
-  let singleLabel = $state('Example QR')
+  let firstRowIsHeader = $state(true)
+  let customHeaders = $state<string[]>([])
 
   async function handleCSVUpload(event: Event) {
     const target = event.target as HTMLInputElement
@@ -38,9 +32,14 @@
     fileName = file.name
 
     try {
-      const data = await parseCSV(file)
+      const data = await parseCSV(file, firstRowIsHeader)
       csvData = data
-      selectedVariables = new Set(data.headers)
+
+      if (data.hasCustomHeaders) {
+        customHeaders = [...data.headers]
+      } else {
+        customHeaders = []
+      }
     } catch (error) {
       alert(`Error parsing CSV: ${error}`)
       csvData = null
@@ -49,65 +48,56 @@
     }
   }
 
-  function toggleVariable(variable: string) {
-    if (selectedVariables.has(variable)) {
-      selectedVariables.delete(variable)
-    } else {
-      selectedVariables.add(variable)
+  function handleFirstRowToggle() {
+    if (csvData) {
+      const input = document.getElementById('csv-upload') as HTMLInputElement
+      const file = input.files?.[0]
+      if (file) {
+        handleCSVUpload({ target: input } as unknown as Event)
+      }
     }
-    selectedVariables = selectedVariables
+  }
+
+  function updateCustomHeader(index: number, value: string) {
+    if (!csvData) return
+
+    const oldHeader = csvData.headers[index]
+    const newHeader = value || `col_${index + 1}`
+
+    customHeaders[index] = newHeader
+    csvData.headers[index] = newHeader
+
+    csvData.rows = csvData.rows.map(row => {
+      const newRow = { ...row }
+      if (oldHeader !== newHeader) {
+        newRow[newHeader] = newRow[oldHeader]
+        delete newRow[oldHeader]
+      }
+      return newRow
+    })
   }
 
   function handleModeChange(newMode: string) {
     mode = newMode as 'single' | 'batch'
-
-    if (mode === 'single') {
-      urlPattern = singleURL
-      labelPattern = singleLabel
-    } else {
-      urlPattern = 'https://example.com/'
-      labelPattern = ''
-    }
   }
-
-  $effect(() => {
-    if (mode === 'single') {
-      urlPattern = singleURL
-      labelPattern = singleLabel
-    }
-  })
-
-  const builtInVariables = ['_row', '_index', '_row_reverse', '_total', '_date', '_timestamp']
 </script>
 
 <Card>
   <CardContent class="pt-6 space-y-4">
+    <div class="flex items-center justify-end mb-2">
+      <Button variant="outline" size="sm" onclick={onClearState}>
+        Clear All
+      </Button>
+    </div>
+
     <Tabs.Root value={mode} onValueChange={handleModeChange}>
       <Tabs.List class="grid w-full grid-cols-2">
-        <Tabs.Trigger value="single">Single QR Code</Tabs.Trigger>
-        <Tabs.Trigger value="batch">CSV Batch Import</Tabs.Trigger>
+        <Tabs.Trigger value="single">Single</Tabs.Trigger>
+        <Tabs.Trigger value="batch">Batch</Tabs.Trigger>
       </Tabs.List>
 
       <Tabs.Content value="single" class="mt-4 space-y-4">
-        <div class="space-y-2">
-          <Label for="single-url">QR Code URL</Label>
-          <Input
-            id="single-url"
-            type="text"
-            bind:value={singleURL}
-            placeholder="https://example.com/your-link"
-          />
-        </div>
-
-        <div class="space-y-2">
-          <Label for="single-label">Label Text (optional)</Label>
-          <Input
-            id="single-label"
-            type="text"
-            bind:value={singleLabel}
-            placeholder="Optional label below QR code"
-          />
-        </div>
+        <p class="text-sm text-muted-foreground">Single QR code mode selected. Configure your URL and label in the Pattern tab.</p>
       </Tabs.Content>
 
       <Tabs.Content value="batch" class="mt-4 space-y-4">
@@ -120,62 +110,64 @@
             onchange={handleCSVUpload}
             class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium"
           />
+
+          <div class="flex items-center gap-2 pt-1">
+            <Checkbox
+              id="first-row-header"
+              checked={firstRowIsHeader}
+              onCheckedChange={(checked) => {
+                firstRowIsHeader = checked === true
+                handleFirstRowToggle()
+              }}
+            />
+            <Label for="first-row-header" class="text-sm font-normal cursor-pointer">
+              First row contains headers
+            </Label>
+          </div>
+
           {#if loading}
             <p class="text-xs text-muted-foreground">Loading CSV...</p>
           {/if}
           {#if csvData}
             <p class="text-xs text-green-600">Loaded {csvData.rows.length} rows</p>
-          {/if}
-        </div>
 
-        {#if csvData}
-          <div class="space-y-2">
-            <Label>QR Code URL Pattern</Label>
-            <VariablePillInput
-              bind:pattern={urlPattern}
-              availableVariables={[...csvData.headers, ...builtInVariables]}
-              onPatternChange={(p) => (urlPattern = p)}
-            />
-          </div>
-
-          <div class="space-y-2">
-            <Label>Label Pattern</Label>
-            <VariablePillInput
-              bind:pattern={labelPattern}
-              availableVariables={[...csvData.headers, ...builtInVariables]}
-              onPatternChange={(p) => (labelPattern = p)}
-            />
-            <p class="text-xs text-muted-foreground italic">Examples: "Item {_row}", "{name} - #{_row}"</p>
-          </div>
-
-          {#if csvData.rows.length > 0}
-            <Separator />
-            <div class="space-y-1">
-              <Label class="text-xs">Sample ({Math.min(5, csvData.rows.length)} first + {Math.min(5, csvData.rows.length)} last)</Label>
-              <div class="text-[10px] leading-tight border border-border rounded overflow-hidden">
-                <div class="grid" style="grid-template-columns: auto 1fr auto;">
-                  {#each csvData.rows.slice(0, 5) as row, idx}
-                    <div class="text-muted-foreground text-right font-mono px-1.5 py-0.5 border-b border-r border-border bg-muted/50">#{idx + 1}</div>
-                    <div class="font-mono truncate px-1.5 py-0.5 border-b border-r border-border">{replaceVariables(urlPattern, row, idx, csvData.rows.length)}</div>
-                    <div class="font-mono px-1.5 py-0.5 border-b border-border">{replaceVariables(labelPattern, row, idx, csvData.rows.length)}</div>
-                  {/each}
-
-                  {#if csvData.rows.length > 10}
-                    <div class="col-span-3 text-center text-muted-foreground py-1 border-b border-border bg-muted/30">⋯ {csvData.rows.length - 10} more ⋯</div>
-                  {/if}
-
-                  {#if csvData.rows.length > 5}
-                    {#each csvData.rows.slice(-5) as row, idx}
-                      <div class="text-muted-foreground text-right font-mono px-1.5 py-0.5 border-b border-r border-border bg-muted/50 last:border-b-0">#{csvData.rows.length - 5 + idx + 1}</div>
-                      <div class="font-mono truncate px-1.5 py-0.5 border-b border-r border-border last:border-b-0">{replaceVariables(urlPattern, row, csvData.rows.length - 5 + idx, csvData.rows.length)}</div>
-                      <div class="font-mono px-1.5 py-0.5 border-b border-border last:border-b-0">{replaceVariables(labelPattern, row, csvData.rows.length - 5 + idx, csvData.rows.length)}</div>
+            <div class="mt-3 space-y-1">
+              <Label class="text-xs text-muted-foreground">CSV Preview (first 3 rows)</Label>
+              <div class="border border-border rounded overflow-hidden">
+                <table class="w-full text-[10px]">
+                  <thead class="bg-muted/50 border-b border-border">
+                    <tr>
+                      {#each csvData.headers as header, idx}
+                        <th class="text-left font-semibold px-2 py-1.5 border-r border-border last:border-r-0">
+                          {#if csvData.hasCustomHeaders}
+                            <input
+                              type="text"
+                              value={customHeaders[idx]}
+                              oninput={(e) => updateCustomHeader(idx, e.currentTarget.value)}
+                              placeholder={`col_${idx + 1}`}
+                              class="w-full bg-transparent border-b border-muted-foreground/30 px-1 focus:outline-none focus:border-primary"
+                            />
+                          {:else}
+                            {header}
+                          {/if}
+                        </th>
+                      {/each}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {#each csvData.rows.slice(0, 3) as row}
+                      <tr class="border-b border-border last:border-b-0">
+                        {#each csvData.headers as header}
+                          <td class="px-2 py-1 font-mono border-r border-border last:border-r-0">{row[header] || ''}</td>
+                        {/each}
+                      </tr>
                     {/each}
-                  {/if}
-                </div>
+                  </tbody>
+                </table>
               </div>
             </div>
           {/if}
-        {/if}
+        </div>
       </Tabs.Content>
     </Tabs.Root>
   </CardContent>
