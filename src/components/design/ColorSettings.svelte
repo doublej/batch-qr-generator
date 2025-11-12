@@ -5,6 +5,7 @@
   import { Checkbox } from '$lib/components/ui/checkbox'
   import { Slider } from '$lib/components/ui/slider'
   import { Separator } from '$lib/components/ui/separator'
+  import { _ } from '../../lib/i18n'
 
   let {
     colors = $bindable(),
@@ -36,7 +37,7 @@
 <div class="space-y-4">
   <div class="grid grid-cols-2 gap-4">
     <div class="space-y-2">
-      <Label for="background-color">Background Color</Label>
+      <Label for="background-color">{$_('colorSettings.backgroundColor')}</Label>
       <div class="flex items-center gap-2">
         <input
           id="background-color"
@@ -49,7 +50,7 @@
       </div>
     </div>
     <div class="space-y-2">
-      <Label for="eye-color">Eye Pattern Color</Label>
+      <Label for="eye-color">{$_('colorSettings.eyeColor')}</Label>
       <div class="flex items-center gap-2">
         <input
           id="eye-color"
@@ -64,7 +65,7 @@
   </div>
 
   <div class="space-y-2">
-    <Label for="data-module-color">Data Module Color</Label>
+    <Label for="data-module-color">{$_('colorSettings.dataModuleColor')}</Label>
     <div class="flex items-center gap-2">
       <input
         id="data-module-color"
@@ -81,27 +82,27 @@
 
   <div class="space-y-4">
     <div class="flex items-center justify-between">
-      <Label for="gradient-enabled">Use Gradient Fill</Label>
+      <Label for="gradient-enabled">{$_('colorSettings.useGradient')}</Label>
       <Checkbox id="gradient-enabled" bind:checked={gradient.enabled} />
     </div>
 
     {#if gradient.enabled}
       <div class="space-y-4 pl-4 border-l-2">
         <div class="space-y-2">
-          <Label for="gradient-type">Gradient Type</Label>
+          <Label for="gradient-type">{$_('colorSettings.gradientType')}</Label>
           <select
             id="gradient-type"
             bind:value={gradient.type}
             class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
-            <option value="linear">Linear</option>
-            <option value="radial">Radial</option>
+            <option value="linear">{$_('colorSettings.linear')}</option>
+            <option value="radial">{$_('colorSettings.radial')}</option>
           </select>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div class="space-y-2">
-            <Label for="gradient-start">Start Color</Label>
+            <Label for="gradient-start">{$_('colorSettings.startColor')}</Label>
             <div class="flex items-center gap-2">
               <input
                 id="gradient-start"
@@ -114,7 +115,7 @@
             </div>
           </div>
           <div class="space-y-2">
-            <Label for="gradient-end">End Color</Label>
+            <Label for="gradient-end">{$_('colorSettings.endColor')}</Label>
             <div class="flex items-center gap-2">
               <input
                 id="gradient-end"
@@ -130,7 +131,7 @@
 
         {#if gradient.type === 'linear'}
           <div class="space-y-2">
-            <Label for="gradient-angle">Gradient Angle</Label>
+            <Label for="gradient-angle">{$_('colorSettings.gradientAngle')}</Label>
             <div class="flex items-center gap-2">
               <Slider id="gradient-angle" bind:value={angleArray} min={0} max={360} step={15} class="flex-1" />
               <span class="text-sm font-mono w-12 text-right">{angleArray[0]}°</span>

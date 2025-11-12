@@ -5,6 +5,7 @@
   import { Input } from '$lib/components/ui/input'
   import { Checkbox } from '$lib/components/ui/checkbox'
   import VariablePillInput from './VariablePillInput.svelte'
+  import { _ } from '../lib/i18n'
 
   let {
     csvData,
@@ -39,18 +40,18 @@
     <Card>
       <CardContent class="pt-6 space-y-4">
         <div class="space-y-2">
-          <Label for="single-url">URL</Label>
+          <Label for="single-url">{$_('patternPanel.url')}</Label>
           <Input
             id="single-url"
             type="text"
             bind:value={urlPattern}
-            placeholder="https://example.com/your-link"
+            placeholder={$_('patternPanel.urlPlaceholder')}
           />
         </div>
 
         <div class="space-y-2 {!labelEnabled ? 'opacity-50' : ''}">
           <div class="flex items-center justify-between">
-            <Label for="single-label">Label</Label>
+            <Label for="single-label">{$_('patternPanel.label')}</Label>
             <div class="flex items-center gap-2">
               <Checkbox
                 id="pattern-label-enabled"
@@ -60,7 +61,7 @@
                 }}
               />
               <Label for="pattern-label-enabled" class="text-sm font-normal cursor-pointer">
-                Show label
+                {$_('patternPanel.showLabel')}
               </Label>
             </div>
           </div>
@@ -68,7 +69,7 @@
             id="single-label"
             type="text"
             bind:value={labelPattern}
-            placeholder="Optional label"
+            placeholder={$_('patternPanel.labelPlaceholder')}
             disabled={!labelEnabled}
           />
         </div>
@@ -77,7 +78,7 @@
   {:else}
     <Card>
       <CardContent class="pt-6 space-y-2">
-        <Label class={!csvData ? 'text-muted-foreground' : ''}>URL Pattern</Label>
+        <Label class={!csvData ? 'text-muted-foreground' : ''}>{$_('patternPanel.urlPattern')}</Label>
         {#if csvData}
           <VariablePillInput
             bind:pattern={urlPattern}
@@ -88,7 +89,7 @@
             totalRows={csvData.rows.length}
           />
         {:else}
-          <Input disabled placeholder="Upload CSV to configure pattern" />
+          <Input disabled placeholder={$_('patternPanel.uploadCSV')} />
         {/if}
       </CardContent>
     </Card>
@@ -96,7 +97,7 @@
     <Card>
       <CardContent class="pt-6 space-y-2 {!labelEnabled ? 'opacity-50' : ''}">
         <div class="flex items-center justify-between">
-          <Label class={!csvData ? 'text-muted-foreground' : ''}>Label Pattern</Label>
+          <Label class={!csvData ? 'text-muted-foreground' : ''}>{$_('patternPanel.labelPattern')}</Label>
           <div class="flex items-center gap-2">
             <Checkbox
               id="batch-pattern-label-enabled"
@@ -107,7 +108,7 @@
               }}
             />
             <Label for="batch-pattern-label-enabled" class="text-sm font-normal cursor-pointer {!csvData ? 'text-muted-foreground' : ''}">
-              Show label
+              {$_('patternPanel.showLabel')}
             </Label>
           </div>
         </div>
@@ -124,7 +125,7 @@
           </div>
 
         {:else}
-          <Input disabled placeholder="Upload CSV to configure pattern" />
+          <Input disabled placeholder={$_('patternPanel.uploadCSV')} />
 
         {/if}
       </CardContent>

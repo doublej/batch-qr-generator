@@ -1,0 +1,166 @@
+{
+  "app": {
+    "title": "QR Code Generator",
+    "description": "Generate and download QR codes for tile batches"
+  },
+  "tabs": {
+    "input": "Input",
+    "pattern": "Pattern",
+    "design": "Design",
+    "export": "Export"
+  },
+  "designTabs": {
+    "basics": "Basics",
+    "module": "Shape",
+    "colors": "Colors",
+    "logo": "Logo",
+    "text": "Text"
+  },
+  "inputPanel": {
+    "clearAll": "Clear All",
+    "single": "Single",
+    "batch": "Batch",
+    "singleMode": "Single QR code mode selected. Configure your URL and label in the Pattern tab.",
+    "csvUpload": "CSV File Upload",
+    "firstRowHeader": "First row contains headers",
+    "loadingCSV": "Loading CSV...",
+    "loadedRows": "Loaded {count} rows",
+    "csvPreview": "CSV Preview (first 3 rows)"
+  },
+  "patternPanel": {
+    "url": "URL",
+    "label": "Label",
+    "showLabel": "Show label",
+    "urlPlaceholder": "https://example.com/your-link",
+    "labelPlaceholder": "Optional label",
+    "urlPattern": "URL Pattern",
+    "labelPattern": "Label Pattern",
+    "uploadCSV": "Upload CSV to configure pattern"
+  },
+  "exportPanel": {
+    "singleDownload": "Download your single QR code",
+    "downloadQRCode": "Download QR Code (PNG)",
+    "exporting": "Exporting...",
+    "exportQRCodes": "Export {count} QR codes",
+    "pngZip": "PNG (ZIP)",
+    "svgZip": "SVG (ZIP)",
+    "pdfA4": "PDF (A4)",
+    "pdfA3": "PDF (A3)",
+    "exportCSV": "Export CSV Data",
+    "uploadCSVMessage": "Upload a CSV file in the Input tab to export batch QR codes"
+  },
+  "previewPanel": {
+    "livePreview": "Live Preview",
+    "generating": "Generating...",
+    "previewPlaceholder": "Preview will appear here",
+    "configureInput": "Configure input to preview",
+    "previous": "Previous",
+    "next": "Next",
+    "download": "Download",
+    "print": "Print",
+    "dpi": "DPI"
+  },
+  "basicSettings": {
+    "qrSize": "QR Code Dimensions",
+    "modules": "modules",
+    "pixelsPerModule": "px per module",
+    "padding": "Padding",
+    "paddingTop": "Top",
+    "paddingRight": "Right",
+    "paddingBottom": "Bottom",
+    "paddingLeft": "Left",
+    "errorCorrection": "Error Correction Level",
+    "errorLow": "Low (7%)",
+    "errorMedium": "Medium (15%)",
+    "errorQuartile": "Quartile (25%)",
+    "errorHigh": "High (30%)"
+  },
+  "shapeSettings": {
+    "moduleShape": "Module Shape",
+    "square": "Square",
+    "dots": "Dots"
+  },
+  "colorSettings": {
+    "backgroundColor": "Background Color",
+    "eyeColor": "Eye Pattern Color",
+    "dataModuleColor": "Data Module Color",
+    "useGradient": "Use Gradient Fill",
+    "gradientType": "Gradient Type",
+    "linear": "Linear",
+    "radial": "Radial",
+    "startColor": "Start Color",
+    "endColor": "End Color",
+    "gradientAngle": "Gradient Angle"
+  },
+  "logoSettings": {
+    "enableLogo": "Enable Logo Overlay",
+    "uploadLogo": "Upload Logo",
+    "logoLoaded": "Logo loaded successfully",
+    "logoSize": "Logo Size",
+    "logoPlacement": "Logo Placement",
+    "center": "Center",
+    "topLeft": "Top-Left",
+    "topRight": "Top-Right",
+    "bottomLeft": "Bottom-Left",
+    "bottomRight": "Bottom-Right",
+    "sizeRelative": "Size relative to QR code dimensions ({percent}% of QR)"
+  },
+  "textSettings": {
+    "showLabel": "Show Text Labels",
+    "textPosition": "Text Position",
+    "positionTop": "Above QR Code",
+    "positionBottom": "Below QR Code",
+    "positionLeft": "Left of QR Code",
+    "positionRight": "Right of QR Code",
+    "textSize": "Text Size",
+    "horizontalOffset": "Horizontal Offset",
+    "verticalOffset": "Vertical Offset",
+    "textAlign": "Text Alignment",
+    "alignLeft": "Left",
+    "alignCenter": "Center",
+    "alignRight": "Right",
+    "fontFamily": "Font Family",
+    "fontSystemUI": "System UI",
+    "fontSerif": "Serif",
+    "fontMonospace": "Monospace",
+    "fontArial": "Arial",
+    "fontTimesNewRoman": "Times New Roman",
+    "fontCourierNew": "Courier New",
+    "fontWeight": "Font Weight",
+    "fontNormal": "Normal",
+    "fontBold": "Bold",
+    "textColor": "Text Color",
+    "textRotation": "Text Rotation",
+    "rotation0": "0° (Horizontal)",
+    "rotation90": "90° (Clockwise)",
+    "rotation180": "180° (Upside Down)",
+    "rotation270": "270° (Counter-Clockwise)"
+  },
+  "sessionSelector": {
+    "newSession": "New Session",
+    "loadSession": "Load Session",
+    "deleteConfirm": "Delete this session?",
+    "failedLoad": "Failed to load session file. Please check the file format.",
+    "download": "Download",
+    "rename": "Rename",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "unknown": "Unknown"
+  },
+  "progressModal": {
+    "preparing": "Preparing...",
+    "generating": "Generating QR codes",
+    "compressing": "Creating ZIP file",
+    "completed": "Generation complete!",
+    "error": "Error occurred",
+    "currentOfTotal": "{current} of {total} QR codes",
+    "successfullyGenerated": "Successfully generated {total} QR codes",
+    "failedGenerate": "Failed to generate QR codes",
+    "cancel": "Cancel",
+    "close": "Close"
+  },
+  "errors": {
+    "csvParsing": "Error parsing CSV: {error}"
+  }
+}

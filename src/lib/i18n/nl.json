@@ -1,0 +1,166 @@
+{
+  "app": {
+    "title": "QR-Code Generator",
+    "description": "Genereer en download QR-codes voor tegelpartijen"
+  },
+  "tabs": {
+    "input": "Invoer",
+    "pattern": "Patroon",
+    "design": "Ontwerp",
+    "export": "Export"
+  },
+  "designTabs": {
+    "basics": "Basis",
+    "module": "Vorm",
+    "colors": "Kleuren",
+    "logo": "Logo",
+    "text": "Tekst"
+  },
+  "inputPanel": {
+    "clearAll": "Alles wissen",
+    "single": "Enkel",
+    "batch": "Batch",
+    "singleMode": "Enkele QR-code modus geselecteerd. Configureer uw URL en label in het Patroon-tabblad.",
+    "csvUpload": "CSV-bestand uploaden",
+    "firstRowHeader": "Eerste rij bevat kopteksten",
+    "loadingCSV": "CSV wordt geladen...",
+    "loadedRows": "{count} rijen geladen",
+    "csvPreview": "CSV-voorbeeld (eerste 3 rijen)"
+  },
+  "patternPanel": {
+    "url": "URL",
+    "label": "Label",
+    "showLabel": "Label tonen",
+    "urlPlaceholder": "https://voorbeeld.nl/uw-link",
+    "labelPlaceholder": "Optioneel label",
+    "urlPattern": "URL-patroon",
+    "labelPattern": "Label-patroon",
+    "uploadCSV": "Upload CSV om patroon te configureren"
+  },
+  "exportPanel": {
+    "singleDownload": "Download uw enkele QR-code",
+    "downloadQRCode": "QR-code downloaden (PNG)",
+    "exporting": "Exporteren...",
+    "exportQRCodes": "{count} QR-codes exporteren",
+    "pngZip": "PNG (ZIP)",
+    "svgZip": "SVG (ZIP)",
+    "pdfA4": "PDF (A4)",
+    "pdfA3": "PDF (A3)",
+    "exportCSV": "CSV-gegevens exporteren",
+    "uploadCSVMessage": "Upload een CSV-bestand in het Invoer-tabblad om batch QR-codes te exporteren"
+  },
+  "previewPanel": {
+    "livePreview": "Live voorbeeld",
+    "generating": "Genereren...",
+    "previewPlaceholder": "Voorbeeld verschijnt hier",
+    "configureInput": "Configureer invoer voor voorbeeld",
+    "previous": "Vorige",
+    "next": "Volgende",
+    "download": "Downloaden",
+    "print": "Afdrukken",
+    "dpi": "DPI"
+  },
+  "basicSettings": {
+    "qrSize": "QR-code afmetingen",
+    "modules": "modules",
+    "pixelsPerModule": "px per module",
+    "padding": "Opvulling",
+    "paddingTop": "Boven",
+    "paddingRight": "Rechts",
+    "paddingBottom": "Onder",
+    "paddingLeft": "Links",
+    "errorCorrection": "Foutcorrectieniveau",
+    "errorLow": "Laag (7%)",
+    "errorMedium": "Gemiddeld (15%)",
+    "errorQuartile": "Kwartiel (25%)",
+    "errorHigh": "Hoog (30%)"
+  },
+  "shapeSettings": {
+    "moduleShape": "Modulevorm",
+    "square": "Vierkant",
+    "dots": "Stippen"
+  },
+  "colorSettings": {
+    "backgroundColor": "Achtergrondkleur",
+    "eyeColor": "Oogpatroonkleur",
+    "dataModuleColor": "Datamodulekleur",
+    "useGradient": "Kleurverloop gebruiken",
+    "gradientType": "Kleurverlooptype",
+    "linear": "Lineair",
+    "radial": "Radiaal",
+    "startColor": "Startkleur",
+    "endColor": "Eindkleur",
+    "gradientAngle": "Kleurverloophoek"
+  },
+  "logoSettings": {
+    "enableLogo": "Logo-overlay inschakelen",
+    "uploadLogo": "Logo uploaden",
+    "logoLoaded": "Logo succesvol geladen",
+    "logoSize": "Logo-grootte",
+    "logoPlacement": "Logo-plaatsing",
+    "center": "Midden",
+    "topLeft": "Linksboven",
+    "topRight": "Rechtsboven",
+    "bottomLeft": "Linksonder",
+    "bottomRight": "Rechtsonder",
+    "sizeRelative": "Grootte relatief aan QR-code afmetingen ({percent}% van QR)"
+  },
+  "textSettings": {
+    "showLabel": "Tekstlabels tonen",
+    "textPosition": "Tekstpositie",
+    "positionTop": "Boven QR-code",
+    "positionBottom": "Onder QR-code",
+    "positionLeft": "Links van QR-code",
+    "positionRight": "Rechts van QR-code",
+    "textSize": "Tekstgrootte",
+    "horizontalOffset": "Horizontale verschuiving",
+    "verticalOffset": "Verticale verschuiving",
+    "textAlign": "Tekstuitlijning",
+    "alignLeft": "Links",
+    "alignCenter": "Gecentreerd",
+    "alignRight": "Rechts",
+    "fontFamily": "Lettertype",
+    "fontSystemUI": "Systeem UI",
+    "fontSerif": "Serif",
+    "fontMonospace": "Monospace",
+    "fontArial": "Arial",
+    "fontTimesNewRoman": "Times New Roman",
+    "fontCourierNew": "Courier New",
+    "fontWeight": "Letterdikte",
+    "fontNormal": "Normaal",
+    "fontBold": "Vet",
+    "textColor": "Tekstkleur",
+    "textRotation": "Tekstrotatie",
+    "rotation0": "0° (Horizontaal)",
+    "rotation90": "90° (Met de klok mee)",
+    "rotation180": "180° (Ondersteboven)",
+    "rotation270": "270° (Tegen de klok in)"
+  },
+  "sessionSelector": {
+    "newSession": "Nieuwe sessie",
+    "loadSession": "Sessie laden",
+    "deleteConfirm": "Deze sessie verwijderen?",
+    "failedLoad": "Kan sessiebestand niet laden. Controleer het bestandsformaat.",
+    "download": "Downloaden",
+    "rename": "Hernoemen",
+    "delete": "Verwijderen",
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "unknown": "Onbekend"
+  },
+  "progressModal": {
+    "preparing": "Voorbereiden...",
+    "generating": "QR-codes genereren",
+    "compressing": "ZIP-bestand maken",
+    "completed": "Generatie voltooid!",
+    "error": "Fout opgetreden",
+    "currentOfTotal": "{current} van {total} QR-codes",
+    "successfullyGenerated": "{total} QR-codes succesvol gegenereerd",
+    "failedGenerate": "Kan QR-codes niet genereren",
+    "cancel": "Annuleren",
+    "close": "Sluiten"
+  },
+  "errors": {
+    "csvParsing": "Fout bij verwerken CSV: {error}"
+  }
+}
