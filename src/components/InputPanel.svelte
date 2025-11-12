@@ -6,6 +6,7 @@
   import { Checkbox } from '$lib/components/ui/checkbox'
   import { Button } from '$lib/components/ui/button'
   import * as Tabs from '$lib/components/ui/tabs'
+  import { _ } from '../lib/i18n'
 
   let {
     csvData = $bindable(),
@@ -41,7 +42,7 @@
         customHeaders = []
       }
     } catch (error) {
-      alert(`Error parsing CSV: ${error}`)
+      alert($_('errors.csvParsing', { values: { error } }))
       csvData = null
     } finally {
       loading = false
@@ -86,23 +87,23 @@
   <CardContent class="pt-6 space-y-4">
     <div class="flex items-center justify-end mb-2">
       <Button variant="outline" size="sm" onclick={onClearState}>
-        Clear All
+        {$_('inputPanel.clearAll')}
       </Button>
     </div>
 
     <Tabs.Root value={mode} onValueChange={handleModeChange}>
       <Tabs.List class="grid w-full grid-cols-2">
-        <Tabs.Trigger value="single">Single</Tabs.Trigger>
-        <Tabs.Trigger value="batch">Batch</Tabs.Trigger>
+        <Tabs.Trigger value="single">{$_('inputPanel.single')}</Tabs.Trigger>
+        <Tabs.Trigger value="batch">{$_('inputPanel.batch')}</Tabs.Trigger>
       </Tabs.List>
 
       <Tabs.Content value="single" class="mt-4 space-y-4">
-        <p class="text-sm text-muted-foreground">Single QR code mode selected. Configure your URL and label in the Pattern tab.</p>
+        <p class="text-sm text-muted-foreground">{$_('inputPanel.singleMode')}</p>
       </Tabs.Content>
 
       <Tabs.Content value="batch" class="mt-4 space-y-4">
         <div class="space-y-2">
-          <Label for="csv-upload">CSV File Upload</Label>
+          <Label for="csv-upload">{$_('inputPanel.csvUpload')}</Label>
           <input
             id="csv-upload"
             type="file"
@@ -121,18 +122,18 @@
               }}
             />
             <Label for="first-row-header" class="text-sm font-normal cursor-pointer">
-              First row contains headers
+              {$_('inputPanel.firstRowHeader')}
             </Label>
           </div>
 
           {#if loading}
-            <p class="text-xs text-muted-foreground">Loading CSV...</p>
+            <p class="text-xs text-muted-foreground">{$_('inputPanel.loadingCSV')}</p>
           {/if}
           {#if csvData}
-            <p class="text-xs text-green-600">Loaded {csvData.rows.length} rows</p>
+            <p class="text-xs text-green-600">{$_('inputPanel.loadedRows', { values: { count: csvData.rows.length } })}</p>
 
             <div class="mt-3 space-y-1">
-              <Label class="text-xs text-muted-foreground">CSV Preview (first 3 rows)</Label>
+              <Label class="text-xs text-muted-foreground">{$_('inputPanel.csvPreview')}</Label>
               <div class="border border-border rounded overflow-hidden">
                 <table class="w-full text-[10px]">
                   <thead class="bg-muted/50 border-b border-border">

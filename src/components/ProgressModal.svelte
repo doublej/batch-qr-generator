@@ -4,6 +4,7 @@
   import { Button } from '$lib/components/ui/button'
   import { Loader2, X, CheckCircle, AlertCircle } from 'lucide-svelte'
   import type { QRGenerationProgress } from '../lib/qr-worker-utils'
+  import { _ } from '../lib/i18n'
 
   let {
     open = $bindable(),
@@ -23,12 +24,15 @@
     error: AlertCircle
   }
 
-  const statusMessages = {
-    idle: 'Preparing...',
-    generating: 'Generating QR codes',
-    compressing: 'Creating ZIP file',
-    completed: 'Generation complete!',
-    error: 'Error occurred'
+  const getStatusMessage = (status: string) => {
+    const keys = {
+      idle: 'progressModal.preparing',
+      generating: 'progressModal.generating',
+      compressing: 'progressModal.compressing',
+      completed: 'progressModal.completed',
+      error: 'progressModal.error'
+    }
+    return $_(keys[status as keyof typeof keys] || 'progressModal.preparing')
   }
 
   const Icon = $derived(statusIcons[progress.status])
@@ -54,17 +58,17 @@
                 class="w-5 h-5 {isProcessing ? 'animate-spin' : ''} {hasError ? 'text-red-500' : isComplete ? 'text-green-500' : 'text-blue-500'}"
               />
             {/if}
-            {statusMessages[progress.status]}
+            {getStatusMessage(progress.status)}
           </h2>
           <p class="text-sm text-muted-foreground">
             {#if progress.message}
               {progress.message}
             {:else if isProcessing}
-              {progress.current} of {progress.total} QR codes
+              {$_('progressModal.currentOfTotal', { values: { current: progress.current, total: progress.total } })}
             {:else if isComplete}
-              Successfully generated {progress.total} QR codes
+              {$_('progressModal.successfullyGenerated', { values: { total: progress.total } })}
             {:else if hasError}
-              Failed to generate QR codes
+              {$_('progressModal.failedGenerate')}
             {/if}
           </p>
         </div>
@@ -91,12 +95,12 @@
             {#if isProcessing && onCancel}
               <Button variant="outline" onclick={onCancel}>
                 <X class="w-4 h-4 mr-2" />
-                Cancel
+                {$_('progressModal.cancel')}
               </Button>
             {/if}
 
             {#if isComplete || hasError}
-              <Button onclick={() => (open = false)}>Close</Button>
+              <Button onclick={() => (open = false)}>{$_('progressModal.close')}</Button>
             {/if}
           </div>
         </div>

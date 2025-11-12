@@ -6,6 +6,7 @@
   import { Card, CardContent } from '$lib/components/ui/card'
   import { Button } from '$lib/components/ui/button'
   import { Input } from '$lib/components/ui/input'
+  import { _ } from '../lib/i18n'
 
   let {
     csvData,
@@ -248,7 +249,7 @@
         {#if previewQR || previewLoading}
           <div class="space-y-4">
             <div class="flex items-center justify-between text-sm">
-              <span class="text-muted-foreground">Live Preview</span>
+              <span class="text-muted-foreground">{$_('previewPanel.livePreview')}</span>
               {#if mode === 'batch' && csvData}
                 <span class="font-mono">{String(previewIndex + 1).padStart(3, '0')}/{String(csvData.rows.length).padStart(3, '0')}</span>
               {/if}
@@ -259,7 +260,7 @@
                 <img src={previewQR} alt="Preview QR Code" class="w-full relative z-10" style="border-radius: var(--radius-nested); max-width: 100%; height: auto;" />
               {:else}
                 <div class="flex items-center justify-center py-12">
-                  <p class="text-muted-foreground">Generating...</p>
+                  <p class="text-muted-foreground">{$_('previewPanel.generating')}</p>
                 </div>
               {/if}
               {#if previewLoading}
@@ -294,7 +295,7 @@
               {#if mode === 'batch' && csvData}
                 <div class="flex gap-2">
                   <Button variant="outline" size="sm" onclick={prevPreview} class="w-24">
-                    Previous
+                    {$_('previewPanel.previous')}
                   </Button>
                   <Input
                     type="number"
@@ -307,24 +308,24 @@
                     class="h-9 text-center"
                   />
                   <Button variant="outline" size="sm" onclick={nextPreview} class="w-24">
-                    Next
+                    {$_('previewPanel.next')}
                   </Button>
                 </div>
               {/if}
               <Button size="sm" onclick={downloadPreview} class="w-full">
-                Download
+                {$_('previewPanel.download')}
               </Button>
             </div>
           </div>
         {:else}
           <div class="flex items-center justify-center py-12">
-            <p class="text-muted-foreground text-center">Preview will appear here</p>
+            <p class="text-muted-foreground text-center">{$_('previewPanel.previewPlaceholder')}</p>
           </div>
         {/if}
       </div>
     {:else}
       <div class="flex items-center justify-center py-12">
-        <p class="text-muted-foreground text-center">Configure input to preview</p>
+        <p class="text-muted-foreground text-center">{$_('previewPanel.configureInput')}</p>
       </div>
     {/if}
   </CardContent>

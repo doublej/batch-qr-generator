@@ -1,0 +1,166 @@
+{
+  "app": {
+    "title": "Générateur de codes QR",
+    "description": "Générez et téléchargez des codes QR pour les lots de carreaux"
+  },
+  "tabs": {
+    "input": "Entrée",
+    "pattern": "Motif",
+    "design": "Design",
+    "export": "Exporter"
+  },
+  "designTabs": {
+    "basics": "Basique",
+    "module": "Forme",
+    "colors": "Couleurs",
+    "logo": "Logo",
+    "text": "Texte"
+  },
+  "inputPanel": {
+    "clearAll": "Tout effacer",
+    "single": "Unique",
+    "batch": "Lot",
+    "singleMode": "Mode code QR unique sélectionné. Configurez votre URL et étiquette dans l'onglet Motif.",
+    "csvUpload": "Télécharger un fichier CSV",
+    "firstRowHeader": "La première ligne contient des en-têtes",
+    "loadingCSV": "Chargement du CSV...",
+    "loadedRows": "{count} lignes chargées",
+    "csvPreview": "Aperçu CSV (3 premières lignes)"
+  },
+  "patternPanel": {
+    "url": "URL",
+    "label": "Étiquette",
+    "showLabel": "Afficher l'étiquette",
+    "urlPlaceholder": "https://exemple.fr/votre-lien",
+    "labelPlaceholder": "Étiquette optionnelle",
+    "urlPattern": "Modèle d'URL",
+    "labelPattern": "Modèle d'étiquette",
+    "uploadCSV": "Télécharger CSV pour configurer le motif"
+  },
+  "exportPanel": {
+    "singleDownload": "Téléchargez votre code QR unique",
+    "downloadQRCode": "Télécharger le code QR (PNG)",
+    "exporting": "Export en cours...",
+    "exportQRCodes": "Exporter {count} codes QR",
+    "pngZip": "PNG (ZIP)",
+    "svgZip": "SVG (ZIP)",
+    "pdfA4": "PDF (A4)",
+    "pdfA3": "PDF (A3)",
+    "exportCSV": "Exporter les données CSV",
+    "uploadCSVMessage": "Téléchargez un fichier CSV dans l'onglet Entrée pour exporter des codes QR en lot"
+  },
+  "previewPanel": {
+    "livePreview": "Aperçu en direct",
+    "generating": "Génération...",
+    "previewPlaceholder": "L'aperçu apparaîtra ici",
+    "configureInput": "Configurer l'entrée pour l'aperçu",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "download": "Télécharger",
+    "print": "Imprimer",
+    "dpi": "PPP"
+  },
+  "basicSettings": {
+    "qrSize": "Dimensions du code QR",
+    "modules": "modules",
+    "pixelsPerModule": "px par module",
+    "padding": "Rembourrage",
+    "paddingTop": "Haut",
+    "paddingRight": "Droite",
+    "paddingBottom": "Bas",
+    "paddingLeft": "Gauche",
+    "errorCorrection": "Niveau de correction d'erreur",
+    "errorLow": "Faible (7%)",
+    "errorMedium": "Moyen (15%)",
+    "errorQuartile": "Quartile (25%)",
+    "errorHigh": "Élevé (30%)"
+  },
+  "shapeSettings": {
+    "moduleShape": "Forme du module",
+    "square": "Carré",
+    "dots": "Points"
+  },
+  "colorSettings": {
+    "backgroundColor": "Couleur d'arrière-plan",
+    "eyeColor": "Couleur du motif oculaire",
+    "dataModuleColor": "Couleur du module de données",
+    "useGradient": "Utiliser un dégradé",
+    "gradientType": "Type de dégradé",
+    "linear": "Linéaire",
+    "radial": "Radial",
+    "startColor": "Couleur de début",
+    "endColor": "Couleur de fin",
+    "gradientAngle": "Angle du dégradé"
+  },
+  "logoSettings": {
+    "enableLogo": "Activer la superposition de logo",
+    "uploadLogo": "Télécharger le logo",
+    "logoLoaded": "Logo chargé avec succès",
+    "logoSize": "Taille du logo",
+    "logoPlacement": "Placement du logo",
+    "center": "Centre",
+    "topLeft": "En haut à gauche",
+    "topRight": "En haut à droite",
+    "bottomLeft": "En bas à gauche",
+    "bottomRight": "En bas à droite",
+    "sizeRelative": "Taille relative aux dimensions du code QR ({percent}% du QR)"
+  },
+  "textSettings": {
+    "showLabel": "Afficher les étiquettes de texte",
+    "textPosition": "Position du texte",
+    "positionTop": "Au-dessus du code QR",
+    "positionBottom": "En dessous du code QR",
+    "positionLeft": "À gauche du code QR",
+    "positionRight": "À droite du code QR",
+    "textSize": "Taille du texte",
+    "horizontalOffset": "Décalage horizontal",
+    "verticalOffset": "Décalage vertical",
+    "textAlign": "Alignement du texte",
+    "alignLeft": "Gauche",
+    "alignCenter": "Centré",
+    "alignRight": "Droite",
+    "fontFamily": "Famille de police",
+    "fontSystemUI": "Système UI",
+    "fontSerif": "Serif",
+    "fontMonospace": "Monospace",
+    "fontArial": "Arial",
+    "fontTimesNewRoman": "Times New Roman",
+    "fontCourierNew": "Courier New",
+    "fontWeight": "Épaisseur de police",
+    "fontNormal": "Normal",
+    "fontBold": "Gras",
+    "textColor": "Couleur du texte",
+    "textRotation": "Rotation du texte",
+    "rotation0": "0° (Horizontal)",
+    "rotation90": "90° (Sens horaire)",
+    "rotation180": "180° (À l'envers)",
+    "rotation270": "270° (Sens antihoraire)"
+  },
+  "sessionSelector": {
+    "newSession": "Nouvelle session",
+    "loadSession": "Charger la session",
+    "deleteConfirm": "Supprimer cette session ?",
+    "failedLoad": "Échec du chargement du fichier de session. Veuillez vérifier le format du fichier.",
+    "download": "Télécharger",
+    "rename": "Renommer",
+    "delete": "Supprimer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "unknown": "Inconnu"
+  },
+  "progressModal": {
+    "preparing": "Préparation...",
+    "generating": "Génération des codes QR",
+    "compressing": "Création du fichier ZIP",
+    "completed": "Génération terminée !",
+    "error": "Erreur survenue",
+    "currentOfTotal": "{current} sur {total} codes QR",
+    "successfullyGenerated": "{total} codes QR générés avec succès",
+    "failedGenerate": "Échec de la génération des codes QR",
+    "cancel": "Annuler",
+    "close": "Fermer"
+  },
+  "errors": {
+    "csvParsing": "Erreur d'analyse CSV : {error}"
+  }
+}

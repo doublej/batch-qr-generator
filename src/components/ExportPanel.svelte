@@ -15,6 +15,7 @@
   import ProgressModal from './ProgressModal.svelte'
   import { QRGeneratorManager, type QRGenerationProgress } from '../lib/qr-worker-utils'
   import { onMount, onDestroy } from 'svelte'
+  import { _ } from '../lib/i18n'
 
   let {
     csvData,
@@ -189,44 +190,42 @@
   <CardContent class="pt-6 space-y-4">
     {#if mode === 'single'}
       <div class="space-y-4">
-        <p class="text-sm text-muted-foreground">Download your single QR code</p>
+        <p class="text-sm text-muted-foreground">{$_('exportPanel.singleDownload')}</p>
         <Button class="w-full" size="lg" onclick={handleExportSingle} disabled={exporting || !urlPattern}>
-          {exporting ? 'Exporting...' : 'Download QR Code (PNG)'}
+          {exporting ? $_('exportPanel.exporting') : $_('exportPanel.downloadQRCode')}
         </Button>
       </div>
     {:else if csvData}
       <div class="space-y-4">
-        <p class="text-sm text-muted-foreground">Export {csvData.rows.length} QR codes</p>
+        <p class="text-sm text-muted-foreground">{$_('exportPanel.exportQRCodes', { values: { count: csvData.rows.length } })}</p>
 
         <div class="grid grid-cols-2 gap-2">
-          <Button onclick={() => handleExportZIP('svg')} disabled={exporting}>
-            {exporting ? 'Exporting...' : 'SVG (ZIP)'}
+          <Button onclick={() => handleExportZIP('png')} disabled={exporting}>
+            {exporting ? $_('exportPanel.exporting') : $_('exportPanel.pngZip')}
           </Button>
-          <Button variant="secondary" onclick={() => handleExportZIP('png')} disabled={exporting}>
-            {exporting ? 'Exporting...' : 'PNG (ZIP)'}
+          <Button onclick={() => handleExportZIP('svg')} disabled={exporting}>
+            {exporting ? $_('exportPanel.exporting') : $_('exportPanel.svgZip')}
           </Button>
         </div>
 
-        {#if isLocalhost}
-          <div class="grid grid-cols-2 gap-2">
-            <Button variant="outline" onclick={() => handleExportPDF('A4')} disabled={exporting}>
-              PDF (A4)
-            </Button>
-            <Button variant="outline" onclick={() => handleExportPDF('A3')} disabled={exporting}>
-              PDF (A3)
-            </Button>
-          </div>
-        {/if}
+        <div class="grid grid-cols-2 gap-2">
+          <Button variant="outline" onclick={() => handleExportPDF('A4')} disabled={exporting}>
+            {$_('exportPanel.pdfA4')}
+          </Button>
+          <Button variant="outline" onclick={() => handleExportPDF('A3')} disabled={exporting}>
+            {$_('exportPanel.pdfA3')}
+          </Button>
+        </div>
 
         <Separator />
 
         <Button variant="secondary" class="w-full" onclick={handleExportCSV}>
-          Export CSV Data
+          {$_('exportPanel.exportCSV')}
         </Button>
       </div>
     {:else}
       <div class="flex items-center justify-center py-12">
-        <p class="text-muted-foreground text-center">Upload a CSV file in the Input tab to export batch QR codes</p>
+        <p class="text-muted-foreground text-center">{$_('exportPanel.uploadCSVMessage')}</p>
       </div>
     {/if}
   </CardContent>

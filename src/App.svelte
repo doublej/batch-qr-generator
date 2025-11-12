@@ -19,6 +19,8 @@
     createSession
   } from './lib/sessionStorage'
   import SessionSelector from './components/SessionSelector.svelte'
+  import LanguageSwitcher from './components/LanguageSwitcher.svelte'
+  import { _ } from './lib/i18n'
 
   let initialized = $state(false)
   let showQRCodes = $state(false)
@@ -169,24 +171,27 @@
   <div class="space-y-6">
     <div class="flex items-center justify-between gap-4">
       <div class="text-center space-y-2 flex-1">
-        <h1 class="text-3xl font-bold tracking-tight">QR Code Generator</h1>
-        <p class="text-muted-foreground">Generate and download QR codes for tile batches</p>
+        <h1 class="text-3xl font-bold tracking-tight">{$_('app.title')}</h1>
+        <p class="text-muted-foreground">{$_('app.description')}</p>
       </div>
-      {#if currentSessionId}
-        <SessionSelector
-          {currentSessionId}
-          onSessionChange={handleSessionChange}
-          onSessionCreated={handleSessionCreated}
-        />
-      {/if}
+      <div class="flex items-center gap-2">
+        <LanguageSwitcher />
+        {#if currentSessionId}
+          <SessionSelector
+            {currentSessionId}
+            onSessionChange={handleSessionChange}
+            onSessionCreated={handleSessionCreated}
+          />
+        {/if}
+      </div>
     </div>
 
     <Tabs.Root bind:value={currentTab}>
       <Tabs.List class="grid w-full grid-cols-4">
-        <Tabs.Trigger value="input">Input</Tabs.Trigger>
-        <Tabs.Trigger value="pattern">Pattern</Tabs.Trigger>
-        <Tabs.Trigger value="design">Design</Tabs.Trigger>
-        <Tabs.Trigger value="export">Export</Tabs.Trigger>
+        <Tabs.Trigger value="input">{$_('tabs.input')}</Tabs.Trigger>
+        <Tabs.Trigger value="pattern">{$_('tabs.pattern')}</Tabs.Trigger>
+        <Tabs.Trigger value="design">{$_('tabs.design')}</Tabs.Trigger>
+        <Tabs.Trigger value="export">{$_('tabs.export')}</Tabs.Trigger>
       </Tabs.List>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
@@ -214,11 +219,11 @@
           <Tabs.Content value="design" class="space-y-4">
             <Tabs.Root bind:value={designStep}>
               <Tabs.List class="grid w-full grid-cols-5">
-                <Tabs.Trigger value="basics">Basics</Tabs.Trigger>
-                <Tabs.Trigger value="module">Shape</Tabs.Trigger>
-                <Tabs.Trigger value="colors">Colors</Tabs.Trigger>
-                <Tabs.Trigger value="logo">Logo</Tabs.Trigger>
-                <Tabs.Trigger value="text">Text</Tabs.Trigger>
+                <Tabs.Trigger value="basics">{$_('designTabs.basics')}</Tabs.Trigger>
+                <Tabs.Trigger value="module">{$_('designTabs.module')}</Tabs.Trigger>
+                <Tabs.Trigger value="colors">{$_('designTabs.colors')}</Tabs.Trigger>
+                <Tabs.Trigger value="logo">{$_('designTabs.logo')}</Tabs.Trigger>
+                <Tabs.Trigger value="text">{$_('designTabs.text')}</Tabs.Trigger>
               </Tabs.List>
 
               <Tabs.Content value="basics" class="mt-4">

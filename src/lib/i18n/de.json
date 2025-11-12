@@ -1,0 +1,166 @@
+{
+  "app": {
+    "title": "QR-Code-Generator",
+    "description": "QR-Codes für Kachelchargen generieren und herunterladen"
+  },
+  "tabs": {
+    "input": "Eingabe",
+    "pattern": "Muster",
+    "design": "Design",
+    "export": "Export"
+  },
+  "designTabs": {
+    "basics": "Grundlagen",
+    "module": "Form",
+    "colors": "Farben",
+    "logo": "Logo",
+    "text": "Text"
+  },
+  "inputPanel": {
+    "clearAll": "Alles löschen",
+    "single": "Einzeln",
+    "batch": "Stapel",
+    "singleMode": "Einzelner QR-Code-Modus ausgewählt. Konfigurieren Sie Ihre URL und Beschriftung im Muster-Tab.",
+    "csvUpload": "CSV-Datei hochladen",
+    "firstRowHeader": "Erste Zeile enthält Überschriften",
+    "loadingCSV": "CSV wird geladen...",
+    "loadedRows": "{count} Zeilen geladen",
+    "csvPreview": "CSV-Vorschau (erste 3 Zeilen)"
+  },
+  "patternPanel": {
+    "url": "URL",
+    "label": "Beschriftung",
+    "showLabel": "Beschriftung anzeigen",
+    "urlPlaceholder": "https://beispiel.de/ihr-link",
+    "labelPlaceholder": "Optionale Beschriftung",
+    "urlPattern": "URL-Muster",
+    "labelPattern": "Beschriftungsmuster",
+    "uploadCSV": "CSV hochladen, um Muster zu konfigurieren"
+  },
+  "exportPanel": {
+    "singleDownload": "Laden Sie Ihren einzelnen QR-Code herunter",
+    "downloadQRCode": "QR-Code herunterladen (PNG)",
+    "exporting": "Wird exportiert...",
+    "exportQRCodes": "{count} QR-Codes exportieren",
+    "pngZip": "PNG (ZIP)",
+    "svgZip": "SVG (ZIP)",
+    "pdfA4": "PDF (A4)",
+    "pdfA3": "PDF (A3)",
+    "exportCSV": "CSV-Daten exportieren",
+    "uploadCSVMessage": "Laden Sie eine CSV-Datei im Eingabe-Tab hoch, um Stapel-QR-Codes zu exportieren"
+  },
+  "previewPanel": {
+    "livePreview": "Live-Vorschau",
+    "generating": "Wird generiert...",
+    "previewPlaceholder": "Vorschau wird hier angezeigt",
+    "configureInput": "Eingabe konfigurieren für Vorschau",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "download": "Herunterladen",
+    "print": "Drucken",
+    "dpi": "DPI"
+  },
+  "basicSettings": {
+    "qrSize": "QR-Code-Abmessungen",
+    "modules": "Module",
+    "pixelsPerModule": "px pro Modul",
+    "padding": "Abstand",
+    "paddingTop": "Oben",
+    "paddingRight": "Rechts",
+    "paddingBottom": "Unten",
+    "paddingLeft": "Links",
+    "errorCorrection": "Fehlerkorrektur-Level",
+    "errorLow": "Niedrig (7%)",
+    "errorMedium": "Mittel (15%)",
+    "errorQuartile": "Quartil (25%)",
+    "errorHigh": "Hoch (30%)"
+  },
+  "shapeSettings": {
+    "moduleShape": "Modulform",
+    "square": "Quadrat",
+    "dots": "Punkte"
+  },
+  "colorSettings": {
+    "backgroundColor": "Hintergrundfarbe",
+    "eyeColor": "Augenmusterfarbe",
+    "dataModuleColor": "Datenmodulfarbe",
+    "useGradient": "Farbverlauf verwenden",
+    "gradientType": "Farbverlaufstyp",
+    "linear": "Linear",
+    "radial": "Radial",
+    "startColor": "Startfarbe",
+    "endColor": "Endfarbe",
+    "gradientAngle": "Farbverlaufswinkel"
+  },
+  "logoSettings": {
+    "enableLogo": "Logo-Überlagerung aktivieren",
+    "uploadLogo": "Logo hochladen",
+    "logoLoaded": "Logo erfolgreich geladen",
+    "logoSize": "Logo-Größe",
+    "logoPlacement": "Logo-Platzierung",
+    "center": "Mitte",
+    "topLeft": "Oben links",
+    "topRight": "Oben rechts",
+    "bottomLeft": "Unten links",
+    "bottomRight": "Unten rechts",
+    "sizeRelative": "Größe relativ zu QR-Code-Abmessungen ({percent}% des QR)"
+  },
+  "textSettings": {
+    "showLabel": "Textbeschriftungen anzeigen",
+    "textPosition": "Textposition",
+    "positionTop": "Über QR-Code",
+    "positionBottom": "Unter QR-Code",
+    "positionLeft": "Links vom QR-Code",
+    "positionRight": "Rechts vom QR-Code",
+    "textSize": "Textgröße",
+    "horizontalOffset": "Horizontaler Versatz",
+    "verticalOffset": "Vertikaler Versatz",
+    "textAlign": "Textausrichtung",
+    "alignLeft": "Links",
+    "alignCenter": "Zentriert",
+    "alignRight": "Rechts",
+    "fontFamily": "Schriftart",
+    "fontSystemUI": "System UI",
+    "fontSerif": "Serif",
+    "fontMonospace": "Monospace",
+    "fontArial": "Arial",
+    "fontTimesNewRoman": "Times New Roman",
+    "fontCourierNew": "Courier New",
+    "fontWeight": "Schriftstärke",
+    "fontNormal": "Normal",
+    "fontBold": "Fett",
+    "textColor": "Textfarbe",
+    "textRotation": "Textrotation",
+    "rotation0": "0° (Horizontal)",
+    "rotation90": "90° (Im Uhrzeigersinn)",
+    "rotation180": "180° (Auf dem Kopf)",
+    "rotation270": "270° (Gegen den Uhrzeigersinn)"
+  },
+  "sessionSelector": {
+    "newSession": "Neue Sitzung",
+    "loadSession": "Sitzung laden",
+    "deleteConfirm": "Diese Sitzung löschen?",
+    "failedLoad": "Sitzungsdatei konnte nicht geladen werden. Bitte überprüfen Sie das Dateiformat.",
+    "download": "Herunterladen",
+    "rename": "Umbenennen",
+    "delete": "Löschen",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "unknown": "Unbekannt"
+  },
+  "progressModal": {
+    "preparing": "Vorbereitung...",
+    "generating": "QR-Codes werden generiert",
+    "compressing": "ZIP-Datei wird erstellt",
+    "completed": "Generierung abgeschlossen!",
+    "error": "Fehler aufgetreten",
+    "currentOfTotal": "{current} von {total} QR-Codes",
+    "successfullyGenerated": "{total} QR-Codes erfolgreich generiert",
+    "failedGenerate": "QR-Codes konnten nicht generiert werden",
+    "cancel": "Abbrechen",
+    "close": "Schließen"
+  },
+  "errors": {
+    "csvParsing": "Fehler beim Parsen der CSV: {error}"
+  }
+}
