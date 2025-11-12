@@ -296,16 +296,21 @@
                   <Button variant="outline" size="sm" onclick={prevPreview} class="w-24">
                     Previous
                   </Button>
-                  <Input
-                    type="number"
-                    min="1"
-                    max={csvData.rows.length}
-                    value={rowInputValue}
-                    oninput={handleRowInput}
-                    onblur={commitRowChange}
-                    onkeydown={handleRowKeydown}
-                    class="h-9 text-center"
-                  />
+                  <div class="flex-1 relative">
+                    <Label for="jump-to-row" class="sr-only">Jump to row</Label>
+                    <Input
+                      id="jump-to-row"
+                      type="number"
+                      min="1"
+                      max={csvData.rows.length}
+                      value={rowInputValue}
+                      oninput={handleRowInput}
+                      onblur={commitRowChange}
+                      onkeydown={handleRowKeydown}
+                      class="h-9 text-center"
+                      aria-label="Jump to row number"
+                    />
+                  </div>
                   <Button variant="outline" size="sm" onclick={nextPreview} class="w-24">
                     Next
                   </Button>

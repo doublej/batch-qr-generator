@@ -40,7 +40,7 @@
         case '_total':
           return String(totalRows)
         case '_date':
-          return new Date().toLocaleDateString()
+          return new Date().toISOString().split('T')[0]
         case '_timestamp':
           return String(Date.now())
         default:
@@ -150,7 +150,7 @@
         case '_index': return String(previewIndex)
         case '_row_reverse': return String(totalRows - previewIndex)
         case '_total': return String(totalRows)
-        case '_date': return new Date().toLocaleDateString()
+        case '_date': return new Date().toISOString().split('T')[0]
         case '_timestamp': return String(Date.now())
         default: return variableName
       }

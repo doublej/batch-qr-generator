@@ -248,7 +248,7 @@
               <Tabs.Content value="logo" class="mt-4">
                 <Card>
                   <CardContent class="pt-6">
-                    <LogoSettings bind:config={design.logo} qrSize={design.qr.size} />
+                    <LogoSettings bind:config={design.logo} qrSize={design.qr.size} errorCorrection={design.qr.errorCorrection} />
                   </CardContent>
                 </Card>
               </Tabs.Content>

@@ -5,6 +5,8 @@
   import { Input } from '$lib/components/ui/input'
   import { Checkbox } from '$lib/components/ui/checkbox'
   import VariablePillInput from './VariablePillInput.svelte'
+  import { extractVariablesFromPattern } from '../lib/csv-parser'
+  import { AlertCircle } from 'lucide-svelte'
 
   let {
     csvData,
@@ -32,6 +34,18 @@
       'General Properties': builtInVariables
     }
   }
+
+  function validatePattern(pattern: string): string[] {
+    if (!csvData || !pattern) return []
+
+    const variables = extractVariablesFromPattern(pattern)
+    const availableVariables = [...(csvData.headers || []), ...builtInVariables]
+
+    return variables.filter(v => !availableVariables.includes(v))
+  }
+
+  let urlMissingFields = $derived(mode === 'batch' ? validatePattern(urlPattern) : [])
+  let labelMissingFields = $derived(mode === 'batch' && labelEnabled ? validatePattern(labelPattern) : [])
 </script>
 
 <div class="space-y-4">
@@ -87,6 +101,16 @@
             {previewIndex}
             totalRows={csvData.rows.length}
           />
+          {#if urlMissingFields.length > 0}
+            <div class="flex items-start gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+              <AlertCircle class="w-4 h-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+              <div class="text-sm text-yellow-800 dark:text-yellow-200">
+                <strong>Missing fields:</strong> {urlMissingFields.map(f => `{${f}}`).join(', ')}
+                <br />
+                <span class="text-xs">These variables don't exist in your CSV or built-in variables.</span>
+              </div>
+            </div>
+          {/if}
         {:else}
           <Input disabled placeholder="Upload CSV to configure pattern" />
         {/if}
@@ -122,7 +146,16 @@
               totalRows={csvData.rows.length}
             />
           </div>
-
+          {#if labelMissingFields.length > 0}
+            <div class="flex items-start gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+              <AlertCircle class="w-4 h-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+              <div class="text-sm text-yellow-800 dark:text-yellow-200">
+                <strong>Missing fields:</strong> {labelMissingFields.map(f => `{${f}}`).join(', ')}
+                <br />
+                <span class="text-xs">These variables don't exist in your CSV or built-in variables.</span>
+              </div>
+            </div>
+          {/if}
         {:else}
           <Input disabled placeholder="Upload CSV to configure pattern" />
 

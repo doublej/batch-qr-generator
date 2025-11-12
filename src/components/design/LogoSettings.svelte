@@ -3,17 +3,23 @@
   import { Label } from '$lib/components/ui/label'
   import { Checkbox } from '$lib/components/ui/checkbox'
   import { Slider } from '$lib/components/ui/slider'
+  import { AlertCircle } from 'lucide-svelte'
 
   let {
     config = $bindable(),
-    qrSize
+    qrSize,
+    errorCorrection = 'M'
   }: {
     config: LogoConfig
     qrSize: number
+    errorCorrection?: 'L' | 'M' | 'Q' | 'H'
   } = $props()
 
   let logoSizeArray = $state([config.size])
   let selectedLogoPath = $state<string>('custom')
+
+  let logoPercentage = $derived((logoSizeArray[0] / qrSize) * 100)
+  let shouldWarnECC = $derived(config.enabled && errorCorrection !== 'H' && logoPercentage > 15)
 
   function handleLogoUpload(event: Event) {
     const target = event.target as HTMLInputElement
@@ -86,6 +92,17 @@
               <option value="bottom-right">Bottom-Right</option>
             </select>
           </div>
+
+          {#if shouldWarnECC}
+            <div class="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md">
+              <AlertCircle class="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+              <div class="text-sm text-amber-800 dark:text-amber-200">
+                <strong>Consider High Error Correction:</strong> Your logo covers {logoPercentage.toFixed(1)}% of the QR code with "{errorCorrection}" error correction.
+                <br />
+                <span class="text-xs">For better scannability with large logos, consider using "H" (High) error correction level in the Basics tab.</span>
+              </div>
+            </div>
+          {/if}
         </div>
       {/if}
     </div>

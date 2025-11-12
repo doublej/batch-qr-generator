@@ -161,6 +161,7 @@ export async function generateQRDataURL(text: string, options?: QROptions): Prom
 
           if (!shouldCenterLogo && options?.logoDataURL) {
             const logoImg = new Image()
+            logoImg.crossOrigin = 'anonymous'
             logoImg.onload = () => {
               let logoSize = options.logoSize || 60
 

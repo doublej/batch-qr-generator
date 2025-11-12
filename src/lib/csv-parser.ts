@@ -80,8 +80,13 @@ export function replaceVariables(
   pattern: string,
   row: Record<string, string>,
   rowIndex?: number,
-  totalRows?: number
+  totalRows?: number,
+  options?: {
+    encodeValues?: boolean
+    booleanMapping?: 'preserve' | 'numeric' | 'omit'
+  }
 ): string {
+  const { encodeValues = true, booleanMapping = 'preserve' } = options || {}
   let result = pattern
 
   const builtIns = rowIndex !== undefined && totalRows !== undefined
@@ -95,7 +100,25 @@ export function replaceVariables(
 
   for (const match of matches) {
     const variableName = match[1]
-    const value = allVariables[variableName] || ''
+    let value = allVariables[variableName] || ''
+
+    // Handle boolean mapping
+    if (booleanMapping !== 'preserve') {
+      const lowerValue = value.toLowerCase()
+      if (lowerValue === 'true' || lowerValue === 'false') {
+        if (booleanMapping === 'numeric') {
+          value = lowerValue === 'true' ? '1' : '0'
+        } else if (booleanMapping === 'omit' && lowerValue === 'false') {
+          value = ''
+        }
+      }
+    }
+
+    // Apply URL encoding if requested
+    if (encodeValues && value) {
+      value = encodeURIComponent(value)
+    }
+
     result = result.replace(`{${variableName}}`, value)
   }
 

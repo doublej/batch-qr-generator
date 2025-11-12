@@ -65,6 +65,7 @@ async function addNonCenterLogo(
 ): Promise<void> {
   const ctx = canvas.getContext('2d')!
   const logoImg = new Image()
+  logoImg.crossOrigin = 'anonymous'
 
   return new Promise((resolve, reject) => {
     logoImg.onload = () => {
