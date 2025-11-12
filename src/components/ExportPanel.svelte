@@ -34,6 +34,7 @@
 
   let exporting = $state(false)
   let showProgressModal = $state(false)
+  let isLocalhost = $state(false)
   let generationProgress = $state<QRGenerationProgress>({
     current: 0,
     total: 0,
@@ -45,6 +46,10 @@
 
   onMount(() => {
     generatorManager = new QRGeneratorManager()
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname
+      isLocalhost = host === 'localhost' || host === '127.0.0.1'
+    }
     generatorManager.setProgressCallback((progress) => {
       generationProgress = progress
 
@@ -194,22 +199,24 @@
         <p class="text-sm text-muted-foreground">Export {csvData.rows.length} QR codes</p>
 
         <div class="grid grid-cols-2 gap-2">
-          <Button onclick={() => handleExportZIP('png')} disabled={exporting}>
-            {exporting ? 'Exporting...' : 'PNG (ZIP)'}
-          </Button>
           <Button onclick={() => handleExportZIP('svg')} disabled={exporting}>
             {exporting ? 'Exporting...' : 'SVG (ZIP)'}
           </Button>
+          <Button variant="secondary" onclick={() => handleExportZIP('png')} disabled={exporting}>
+            {exporting ? 'Exporting...' : 'PNG (ZIP)'}
+          </Button>
         </div>
 
-        <div class="grid grid-cols-2 gap-2">
-          <Button variant="outline" onclick={() => handleExportPDF('A4')} disabled={exporting}>
-            PDF (A4)
-          </Button>
-          <Button variant="outline" onclick={() => handleExportPDF('A3')} disabled={exporting}>
-            PDF (A3)
-          </Button>
-        </div>
+        {#if isLocalhost}
+          <div class="grid grid-cols-2 gap-2">
+            <Button variant="outline" onclick={() => handleExportPDF('A4')} disabled={exporting}>
+              PDF (A4)
+            </Button>
+            <Button variant="outline" onclick={() => handleExportPDF('A3')} disabled={exporting}>
+              PDF (A3)
+            </Button>
+          </div>
+        {/if}
 
         <Separator />
 
