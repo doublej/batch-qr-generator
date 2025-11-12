@@ -19,17 +19,61 @@
   $effect(() => {
     gradient.angle = angleArray[0]
   })
+
+  // Function to convert hex to RGB
+  function hexToRgb(hex: string): string {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+    if (result) {
+      const r = parseInt(result[1], 16)
+      const g = parseInt(result[2], 16)
+      const b = parseInt(result[3], 16)
+      return `RGB(${r}, ${g}, ${b})`
+    }
+    return 'RGB(0, 0, 0)'
+  }
 </script>
 
 <div class="space-y-4">
   <div class="grid grid-cols-2 gap-4">
     <div class="space-y-2">
-      <Label for="eye-color">Eye Pattern Color</Label>
-      <Input id="eye-color" type="color" bind:value={colors.eyeColor} class="h-10" />
+      <Label for="background-color">Background Color</Label>
+      <div class="flex items-center gap-2">
+        <input
+          id="background-color"
+          type="color"
+          bind:value={colors.background}
+          class="w-12 h-12 rounded-full border-2 border-input cursor-pointer"
+          style="padding: 0; background: {colors.background}"
+        />
+        <span class="text-xs font-mono text-muted-foreground">{hexToRgb(colors.background)}</span>
+      </div>
     </div>
     <div class="space-y-2">
-      <Label for="data-module-color">Data Module Color</Label>
-      <Input id="data-module-color" type="color" bind:value={colors.dataModuleColor} class="h-10" />
+      <Label for="eye-color">Eye Pattern Color</Label>
+      <div class="flex items-center gap-2">
+        <input
+          id="eye-color"
+          type="color"
+          bind:value={colors.eyeColor}
+          class="w-12 h-12 rounded-full border-2 border-input cursor-pointer"
+          style="padding: 0; background: {colors.eyeColor}"
+        />
+        <span class="text-xs font-mono text-muted-foreground">{hexToRgb(colors.eyeColor)}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="space-y-2">
+    <Label for="data-module-color">Data Module Color</Label>
+    <div class="flex items-center gap-2">
+      <input
+        id="data-module-color"
+        type="color"
+        bind:value={colors.dataModuleColor}
+        class="w-12 h-12 rounded-full border-2 border-input cursor-pointer"
+        style="padding: 0; background: {colors.dataModuleColor}"
+      />
+      <span class="text-xs font-mono text-muted-foreground">{hexToRgb(colors.dataModuleColor)}</span>
     </div>
   </div>
 
@@ -58,11 +102,29 @@
         <div class="grid grid-cols-2 gap-4">
           <div class="space-y-2">
             <Label for="gradient-start">Start Color</Label>
-            <Input id="gradient-start" type="color" bind:value={gradient.start} class="h-10" />
+            <div class="flex items-center gap-2">
+              <input
+                id="gradient-start"
+                type="color"
+                bind:value={gradient.start}
+                class="w-12 h-12 rounded-full border-2 border-input cursor-pointer"
+                style="padding: 0; background: {gradient.start}"
+              />
+              <span class="text-xs font-mono text-muted-foreground">{hexToRgb(gradient.start)}</span>
+            </div>
           </div>
           <div class="space-y-2">
             <Label for="gradient-end">End Color</Label>
-            <Input id="gradient-end" type="color" bind:value={gradient.end} class="h-10" />
+            <div class="flex items-center gap-2">
+              <input
+                id="gradient-end"
+                type="color"
+                bind:value={gradient.end}
+                class="w-12 h-12 rounded-full border-2 border-input cursor-pointer"
+                style="padding: 0; background: {gradient.end}"
+              />
+              <span class="text-xs font-mono text-muted-foreground">{hexToRgb(gradient.end)}</span>
+            </div>
           </div>
         </div>
 
@@ -79,3 +141,27 @@
     {/if}
   </div>
 </div>
+
+<style>
+  input[type="color"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: none;
+    cursor: pointer;
+  }
+
+  input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+
+  input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 50%;
+  }
+
+  input[type="color"]::-moz-color-swatch {
+    border: none;
+    border-radius: 50%;
+  }
+</style>

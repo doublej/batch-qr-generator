@@ -3,7 +3,7 @@ import Papa from 'papaparse'
 export interface CSVData {
   headers: string[]
   rows: Record<string, string>[]
-  hasCustomHeaders?: boolean
+  hasCustomHeaders: boolean
 }
 
 export function parseCSV(file: File, firstRowIsHeader: boolean): Promise<CSVData> {
@@ -88,7 +88,7 @@ export function replaceVariables(
     ? getBuiltInVariables(rowIndex, totalRows)
     : {}
 
-  const allVariables = { ...row, ...builtIns }
+  const allVariables: Record<string, string> = { ...row, ...builtIns }
 
   const variablePattern = /\{([^}]+)\}/g
   const matches = pattern.matchAll(variablePattern)

@@ -1,15 +1,18 @@
 <script lang="ts">
   import { Button as ButtonPrimitive } from 'bits-ui'
   import { cn } from '$lib/utils'
-  import { type ComponentProps, type Snippet } from 'svelte'
+  import { type Snippet } from 'svelte'
 
   type ButtonVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
   type ButtonSize = 'default' | 'sm' | 'lg' | 'icon'
 
-  interface ButtonProps extends ComponentProps<ButtonPrimitive.Root> {
+  interface ButtonProps {
     variant?: ButtonVariant
     size?: ButtonSize
+    class?: string
     children?: Snippet
+    onclick?: (e: MouseEvent) => void
+    disabled?: boolean
   }
 
   let { variant = 'default', size = 'default', class: className, children, ...restProps }: ButtonProps = $props()

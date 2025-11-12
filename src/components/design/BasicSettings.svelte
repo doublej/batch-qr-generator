@@ -2,33 +2,79 @@
   import type { QRConfig } from '$lib/config'
   import { Label } from '$lib/components/ui/label'
   import { Slider } from '$lib/components/ui/slider'
+  import {
+    snapToValidQRSize,
+    getEstimatedModuleCount,
+    getPixelsPerModule,
+    calculateValidQRSizes
+  } from '$lib/qr-dimensions'
 
   let { config = $bindable() }: { config: QRConfig } = $props()
 
-  let sizeArray = $state([config.size])
-  let marginTopArray = $state([config.margin.top])
-  let marginRightArray = $state([config.margin.right])
-  let marginBottomArray = $state([config.margin.bottom])
-  let marginLeftArray = $state([config.margin.left])
+  // Ensure padding exists with default values
+  if (!config.padding) {
+    config.padding = {
+      top: 16,
+      right: 16,
+      bottom: 16,
+      left: 16
+    }
+  }
 
+  const MIN_SIZE = 150
+  const MAX_SIZE = 800
+
+  // Calculate valid snap points
+  const validSizes = calculateValidQRSizes(MIN_SIZE, MAX_SIZE)
+
+  // Snap initial size to valid QR size
+  const initialSnappedSize = snapToValidQRSize(config.size, MIN_SIZE, MAX_SIZE)
+  config.size = initialSnappedSize
+
+  let sizeArray = $state([initialSnappedSize])
+  let paddingTopArray = $state([config.padding.top])
+  let paddingRightArray = $state([config.padding.right])
+  let paddingBottomArray = $state([config.padding.bottom])
+  let paddingLeftArray = $state([config.padding.left])
+
+  // Calculate module information
+  let estimatedModules = $derived(getEstimatedModuleCount(sizeArray[0]))
+  let pixelsPerModule = $derived(getPixelsPerModule(sizeArray[0], estimatedModules))
+
+  // Update config when sliders change
   $effect(() => {
-    config.size = sizeArray[0]
+    // Snap to valid QR size
+    const snappedSize = snapToValidQRSize(sizeArray[0], MIN_SIZE, MAX_SIZE)
+    sizeArray[0] = snappedSize
+    config.size = snappedSize
   })
 
   $effect(() => {
-    config.margin.top = marginTopArray[0]
+    if (!config.padding) {
+      config.padding = { top: 16, right: 16, bottom: 16, left: 16 }
+    }
+    config.padding.top = paddingTopArray[0]
   })
 
   $effect(() => {
-    config.margin.right = marginRightArray[0]
+    if (!config.padding) {
+      config.padding = { top: 16, right: 16, bottom: 16, left: 16 }
+    }
+    config.padding.right = paddingRightArray[0]
   })
 
   $effect(() => {
-    config.margin.bottom = marginBottomArray[0]
+    if (!config.padding) {
+      config.padding = { top: 16, right: 16, bottom: 16, left: 16 }
+    }
+    config.padding.bottom = paddingBottomArray[0]
   })
 
   $effect(() => {
-    config.margin.left = marginLeftArray[0]
+    if (!config.padding) {
+      config.padding = { top: 16, right: 16, bottom: 16, left: 16 }
+    }
+    config.padding.left = paddingLeftArray[0]
   })
 </script>
 
@@ -36,40 +82,43 @@
   <div class="space-y-2">
     <Label for="qr-size">QR Code Dimensions</Label>
     <div class="flex items-center gap-2">
-      <Slider id="qr-size" bind:value={sizeArray} min={150} max={800} step={10} class="flex-1" />
+      <Slider id="qr-size" bind:value={sizeArray} min={MIN_SIZE} max={MAX_SIZE} step={1} class="flex-1" />
       <span class="text-sm font-mono w-16 text-right">{sizeArray[0]}px</span>
+    </div>
+    <div class="text-xs text-muted-foreground">
+      ~{estimatedModules}×{estimatedModules} modules • {pixelsPerModule}px per module
     </div>
   </div>
 
   <div class="space-y-2">
-    <Label>Margin</Label>
+    <Label>Padding</Label>
     <div class="grid grid-cols-2 gap-3">
       <div class="space-y-1">
-        <Label for="margin-top" class="text-xs text-muted-foreground">Top</Label>
+        <Label for="padding-top" class="text-xs text-muted-foreground">Top</Label>
         <div class="flex items-center gap-2">
-          <Slider id="margin-top" bind:value={marginTopArray} min={0} max={100} step={1} class="flex-1" />
-          <span class="text-xs font-mono w-10 text-right">{marginTopArray[0]}px</span>
+          <Slider id="padding-top" bind:value={paddingTopArray} min={0} max={100} step={1} class="flex-1" />
+          <span class="text-xs font-mono w-10 text-right">{paddingTopArray[0]}px</span>
         </div>
       </div>
       <div class="space-y-1">
-        <Label for="margin-right" class="text-xs text-muted-foreground">Right</Label>
+        <Label for="padding-right" class="text-xs text-muted-foreground">Right</Label>
         <div class="flex items-center gap-2">
-          <Slider id="margin-right" bind:value={marginRightArray} min={0} max={100} step={1} class="flex-1" />
-          <span class="text-xs font-mono w-10 text-right">{marginRightArray[0]}px</span>
+          <Slider id="padding-right" bind:value={paddingRightArray} min={0} max={100} step={1} class="flex-1" />
+          <span class="text-xs font-mono w-10 text-right">{paddingRightArray[0]}px</span>
         </div>
       </div>
       <div class="space-y-1">
-        <Label for="margin-bottom" class="text-xs text-muted-foreground">Bottom</Label>
+        <Label for="padding-bottom" class="text-xs text-muted-foreground">Bottom</Label>
         <div class="flex items-center gap-2">
-          <Slider id="margin-bottom" bind:value={marginBottomArray} min={0} max={100} step={1} class="flex-1" />
-          <span class="text-xs font-mono w-10 text-right">{marginBottomArray[0]}px</span>
+          <Slider id="padding-bottom" bind:value={paddingBottomArray} min={0} max={100} step={1} class="flex-1" />
+          <span class="text-xs font-mono w-10 text-right">{paddingBottomArray[0]}px</span>
         </div>
       </div>
       <div class="space-y-1">
-        <Label for="margin-left" class="text-xs text-muted-foreground">Left</Label>
+        <Label for="padding-left" class="text-xs text-muted-foreground">Left</Label>
         <div class="flex items-center gap-2">
-          <Slider id="margin-left" bind:value={marginLeftArray} min={0} max={100} step={1} class="flex-1" />
-          <span class="text-xs font-mono w-10 text-right">{marginLeftArray[0]}px</span>
+          <Slider id="padding-left" bind:value={paddingLeftArray} min={0} max={100} step={1} class="flex-1" />
+          <span class="text-xs font-mono w-10 text-right">{paddingLeftArray[0]}px</span>
         </div>
       </div>
     </div>

@@ -12,6 +12,9 @@
   import { Card, CardContent } from '$lib/components/ui/card'
   import { Button } from '$lib/components/ui/button'
   import { Separator } from '$lib/components/ui/separator'
+  import ProgressModal from './ProgressModal.svelte'
+  import { QRGeneratorManager, type QRGenerationProgress } from '../lib/qr-worker-utils'
+  import { onMount, onDestroy } from 'svelte'
 
   let {
     csvData,
@@ -30,6 +33,33 @@
   } = $props()
 
   let exporting = $state(false)
+  let showProgressModal = $state(false)
+  let generationProgress = $state<QRGenerationProgress>({
+    current: 0,
+    total: 0,
+    percentage: 0,
+    status: 'idle'
+  })
+
+  let generatorManager: QRGeneratorManager | null = null
+
+  onMount(() => {
+    generatorManager = new QRGeneratorManager()
+    generatorManager.setProgressCallback((progress) => {
+      generationProgress = progress
+
+      // Auto-close modal after completion
+      if (progress.status === 'completed') {
+        setTimeout(() => {
+          showProgressModal = false
+        }, 1500)
+      }
+    })
+  })
+
+  onDestroy(() => {
+    generatorManager?.destroy()
+  })
 
   async function handleExportSingle() {
     exporting = true
@@ -37,7 +67,7 @@
     try {
       const dataUrl = await generateQRDataURL(urlPattern, {
         tileLabel: labelEnabled ? labelPattern : '',
-        errorCorrectionLevel: options.qr.errorCorrectionLevel,
+        errorCorrectionLevel: options.qr.errorCorrection,
         logoDataURL: options.logo.enabled ? options.logo.dataURL : '',
         logoSize: options.logo.size,
         logoPlacement: options.logo.placement,
@@ -52,14 +82,15 @@
         textColor: options.text.color,
         textRotation: options.text.rotation,
         qrSize: options.qr.size,
-        qrMargin: options.qr.margin,
+        qrPadding: options.qr.padding,
         moduleShape: options.qr.moduleShape,
+        backgroundColor: options.colors.background,
         eyeColor: options.colors.eyeColor,
         dataModuleColor: options.colors.dataModuleColor,
         useGradient: options.gradient.enabled,
         gradientType: options.gradient.type,
-        gradientStart: options.gradient.startColor,
-        gradientEnd: options.gradient.endColor,
+        gradientStart: options.gradient.start,
+        gradientEnd: options.gradient.end,
         gradientAngle: options.gradient.angle
       })
 
@@ -71,48 +102,43 @@
   }
 
   async function handleExportZIP(format: 'png' | 'svg') {
-    if (!csvData) return
+    if (!csvData || !generatorManager) return
+
     exporting = true
+    showProgressModal = true
+    generationProgress = {
+      current: 0,
+      total: csvData.rows.length,
+      percentage: 0,
+      status: 'idle'
+    }
 
     try {
-      if (format === 'png') {
-        await downloadAllQRsFromCSV(
-          csvData,
-          urlPattern,
-          labelPattern,
-          options.qr.errorCorrectionLevel,
-          options.logo.enabled ? options.logo.dataURL : '',
-          options.logo.size,
-          options.logo.placement,
-          options.text.size,
-          options.text.margin,
-          options.text.position,
-          options.text.enabled,
-          options.qr.size,
-          options.qr.margin,
-          options.qr.moduleShape
-        )
-      } else {
-        await downloadAllQRsSVGFromCSV(
-          csvData,
-          urlPattern,
-          labelPattern,
-          options.qr.errorCorrectionLevel,
-          options.logo.enabled ? options.logo.dataURL : '',
-          options.logo.size,
-          options.logo.placement,
-          options.text.size,
-          options.text.margin,
-          options.text.position,
-          options.text.enabled,
-          options.qr.size,
-          options.qr.margin,
-          options.qr.moduleShape
-        )
+      const blob = await generatorManager.generateBatch(
+        csvData,
+        urlPattern,
+        labelEnabled ? labelPattern : '',
+        format,
+        options
+      )
+
+      downloadFile(blob, `qrcodes-${format}.zip`)
+    } catch (error) {
+      console.error('Error generating QR codes:', error)
+      generationProgress = {
+        ...generationProgress,
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Failed to generate QR codes'
       }
     } finally {
       exporting = false
     }
+  }
+
+  function handleCancelGeneration() {
+    generatorManager?.cancel()
+    showProgressModal = false
+    exporting = false
   }
 
   async function handleExportPDF(pageSize: 'A4' | 'A3') {
@@ -124,16 +150,16 @@
         csvData,
         urlPattern,
         labelPattern,
-        options.qr.errorCorrectionLevel,
+        options.qr.errorCorrection,
         options.logo.enabled ? options.logo.dataURL : '',
         options.logo.size,
         options.logo.placement,
         options.text.size,
-        options.text.margin,
+        0, // text margin (not used)
         options.text.position,
         options.text.enabled,
         options.qr.size,
-        options.qr.margin,
+        options.qr.padding,
         pageSize,
         options.qr.moduleShape
       )
@@ -147,6 +173,12 @@
     downloadCSVData(csvData, urlPattern, labelPattern, 'data.csv')
   }
 </script>
+
+<ProgressModal
+  bind:open={showProgressModal}
+  bind:progress={generationProgress}
+  onCancel={handleCancelGeneration}
+/>
 
 <Card>
   <CardContent class="pt-6 space-y-4">

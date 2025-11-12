@@ -36,3 +36,11 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  /* Custom larger inner shadow for inputs */
+  .shadow-inner-lg {
+    box-shadow: inset 0 4px 12px 0 rgb(0 0 0 / 0.05),
+                inset 0 2px 4px 0 rgb(0 0 0 / 0.03);
+  }
+}

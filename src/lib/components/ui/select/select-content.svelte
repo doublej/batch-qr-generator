@@ -1,13 +1,14 @@
 <script lang="ts">
   import { Select as SelectPrimitive } from 'bits-ui'
   import { cn } from '$lib/utils'
-  import { type ComponentProps } from 'svelte'
+  import { type Snippet } from 'svelte'
 
-  interface SelectContentProps extends ComponentProps<SelectPrimitive.Content> {
+  interface SelectContentProps {
     class?: string
+    children?: Snippet
   }
 
-  let { class: className, ...restProps }: SelectContentProps = $props()
+  let { class: className, children, ...restProps }: SelectContentProps = $props()
 </script>
 
 <SelectPrimitive.Content

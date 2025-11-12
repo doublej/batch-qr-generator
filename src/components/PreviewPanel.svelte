@@ -14,7 +14,8 @@
     selectedVariables,
     mode,
     labelEnabled,
-    options
+    options,
+    onPreviewIndexChange
   }: {
     csvData: CSVData | null
     urlPattern: string
@@ -23,6 +24,7 @@
     mode: 'single' | 'batch'
     labelEnabled: boolean
     options: QRDesignOptions
+    onPreviewIndexChange?: (index: number) => void
   } = $props()
 
   let previewQR = $state<string>('')
@@ -32,16 +34,22 @@
   let currentURL = $state<string>('')
   let rowInputValue = $state<string>('1')
 
+  // Inverse scaling: smaller QR = larger grid, larger QR = smaller grid
+  // Base is 25px at 500px QR size
+  let checkerSize = $derived(Math.max(10, Math.min(50, (500 / options.qr.size) * 25)))
+
   function nextPreview() {
     if (!csvData) return
     previewIndex = (previewIndex + 1) % csvData.rows.length
     rowInputValue = String(previewIndex + 1)
+    onPreviewIndexChange?.(previewIndex)
   }
 
   function prevPreview() {
     if (!csvData) return
     previewIndex = (previewIndex - 1 + csvData.rows.length) % csvData.rows.length
     rowInputValue = String(previewIndex + 1)
+    onPreviewIndexChange?.(previewIndex)
   }
 
   async function updatePreview() {
@@ -52,13 +60,14 @@
         return
       }
 
+      // Show loading state when generating a new QR
       previewLoading = true
       currentURL = urlPattern
 
       try {
         const dataUrl = await generateQRDataURL(urlPattern, {
           tileLabel: labelEnabled ? labelPattern : '',
-          errorCorrectionLevel: options.qr.errorCorrectionLevel,
+          errorCorrectionLevel: options.qr.errorCorrection,
           logoDataURL: options.logo.enabled ? options.logo.dataURL : '',
           logoSize: options.logo.size,
           logoPlacement: options.logo.placement,
@@ -73,8 +82,9 @@
           textColor: options.text.color,
           textRotation: options.text.rotation,
           qrSize: options.qr.size,
-          qrMargin: options.qr.margin,
+          qrPadding: options.qr.padding,
           moduleShape: options.qr.moduleShape,
+          backgroundColor: options.colors.background,
           eyeColor: options.colors.eyeColor,
           dataModuleColor: options.colors.dataModuleColor,
           useGradient: options.gradient.enabled,
@@ -98,6 +108,7 @@
         return
       }
 
+      // Show loading state when generating a new QR
       previewLoading = true
 
       try {
@@ -108,7 +119,7 @@
 
         const dataUrl = await generateQRDataURL(url, {
           tileLabel: labelEnabled ? label : '',
-          errorCorrectionLevel: options.qr.errorCorrectionLevel,
+          errorCorrectionLevel: options.qr.errorCorrection,
           logoDataURL: options.logo.enabled ? options.logo.dataURL : '',
           logoSize: options.logo.size,
           logoPlacement: options.logo.placement,
@@ -123,8 +134,9 @@
           textColor: options.text.color,
           textRotation: options.text.rotation,
           qrSize: options.qr.size,
-          qrMargin: options.qr.margin,
+          qrPadding: options.qr.padding,
           moduleShape: options.qr.moduleShape,
+          backgroundColor: options.colors.background,
           eyeColor: options.colors.eyeColor,
           dataModuleColor: options.colors.dataModuleColor,
           useGradient: options.gradient.enabled,
@@ -173,6 +185,7 @@
 
     if (!isNaN(rowNumber) && rowNumber >= 1 && rowNumber <= csvData.rows.length) {
       previewIndex = rowNumber - 1
+      onPreviewIndexChange?.(previewIndex)
     } else {
       rowInputValue = String(previewIndex + 1)
     }
@@ -186,6 +199,38 @@
   }
 
   $effect(() => {
+    // Trigger on any option changes including padding
+    options.qr.padding?.top
+    options.qr.padding?.right
+    options.qr.padding?.bottom
+    options.qr.padding?.left
+    options.qr.size
+    options.qr.errorCorrection
+    options.qr.moduleShape
+    options.logo.enabled
+    options.logo.dataURL
+    options.logo.size
+    options.logo.placement
+    options.text.enabled
+    options.text.size
+    options.text.position
+    options.text.offsetX
+    options.text.offsetY
+    options.text.align
+    options.text.font
+    options.text.weight
+    options.text.color
+    options.text.rotation
+    options.colors.eyeColor
+    options.colors.dataModuleColor
+    options.gradient.enabled
+    options.gradient.type
+    options.gradient.startColor
+    options.gradient.endColor
+    options.gradient.angle
+    labelEnabled
+    labelPattern
+
     if (mode === 'single' && urlPattern) {
       updatePreview()
     } else if (mode === 'batch' && csvData && urlPattern) {
@@ -200,11 +245,7 @@
   <CardContent class="pt-6">
     {#if mode === 'single' || csvData}
       <div class="space-y-4">
-        {#if previewLoading}
-          <div class="flex items-center justify-center py-12">
-            <p class="text-muted-foreground">Loading...</p>
-          </div>
-        {:else if previewQR}
+        {#if previewQR || previewLoading}
           <div class="space-y-4">
             <div class="flex items-center justify-between text-sm">
               <span class="text-muted-foreground">Live Preview</span>
@@ -213,8 +254,17 @@
               {/if}
             </div>
 
-            <div class="relative border overflow-hidden p-4" style="border-radius: var(--radius-inner); background-image: repeating-conic-gradient(#9ca3af 0% 25%, #6b7280 0% 50%); background-size: 20px 20px; background-position: 0 0;">
-              <img src={previewQR} alt="Preview QR Code" class="w-full relative z-10" style="border-radius: var(--radius-nested);" />
+            <div class="qr-preview-container relative border overflow-hidden p-8" style="border-radius: var(--radius-inner); background-image: repeating-conic-gradient(#9ca3af 0% 25%, #6b7280 0% 50%); background-size: {checkerSize}px {checkerSize}px; background-position: 0 0;">
+              {#if previewQR}
+                <img src={previewQR} alt="Preview QR Code" class="w-full relative z-10" style="border-radius: var(--radius-nested); max-width: 100%; height: auto;" />
+              {:else}
+                <div class="flex items-center justify-center py-12">
+                  <p class="text-muted-foreground">Generating...</p>
+                </div>
+              {/if}
+              {#if previewLoading}
+                <div class="breathing-gradient absolute inset-0 z-20 pointer-events-none"></div>
+              {/if}
             </div>
 
             <div class="space-y-2 text-xs">
@@ -225,7 +275,7 @@
               {/if}
 
               <div class="text-muted-foreground space-y-1">
-                <div>{options.qr.size}px × {options.qr.size}px (100px grid)</div>
+                <div>{options.qr.size}px × {options.qr.size}px ({checkerSize.toFixed(0)}px grid)</div>
                 <div class="flex items-center gap-2">
                   <span>Print: {((options.qr.size / dpi) * 25.4).toFixed(1)}mm × {((options.qr.size / dpi) * 25.4).toFixed(1)}mm @</span>
                   <select
@@ -279,3 +329,55 @@
     {/if}
   </CardContent>
 </Card>
+
+<style>
+  @keyframes breathingGradient {
+    0% {
+      background: linear-gradient(
+        135deg,
+        rgba(59, 130, 246, 0) 0%,
+        rgba(59, 130, 246, 0.4) 10%,
+        rgba(139, 92, 246, 0.4) 20%,
+        rgba(139, 92, 246, 0) 30%,
+        transparent 100%
+      );
+      transform: translateX(-100%) translateY(-100%);
+    }
+    50% {
+      background: linear-gradient(
+        135deg,
+        rgba(59, 130, 246, 0) 0%,
+        rgba(59, 130, 246, 0.5) 25%,
+        rgba(139, 92, 246, 0.5) 50%,
+        rgba(139, 92, 246, 0) 75%,
+        transparent 100%
+      );
+      transform: translateX(0%) translateY(0%);
+    }
+    100% {
+      background: linear-gradient(
+        135deg,
+        rgba(59, 130, 246, 0) 0%,
+        rgba(59, 130, 246, 0.4) 10%,
+        rgba(139, 92, 246, 0.4) 20%,
+        rgba(139, 92, 246, 0) 30%,
+        transparent 100%
+      );
+      transform: translateX(100%) translateY(100%);
+    }
+  }
+
+  .breathing-gradient {
+    background: linear-gradient(
+      135deg,
+      rgba(59, 130, 246, 0.3) 0%,
+      rgba(139, 92, 246, 0.3) 100%
+    );
+    animation: breathingGradient 2s ease-in-out infinite;
+    mix-blend-mode: screen;
+  }
+
+  .qr-preview-container {
+    position: relative;
+  }
+</style>

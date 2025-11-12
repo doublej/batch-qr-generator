@@ -3,6 +3,7 @@
 
   interface SliderProps {
     class?: string
+    id?: string
     value?: number[]
     min?: number
     max?: number
@@ -12,6 +13,7 @@
 
   let {
     class: className,
+    id,
     value = $bindable([0]),
     min = 0,
     max = 100,
@@ -27,6 +29,7 @@
 
 <div class={cn('relative flex w-full touch-none select-none items-center', className)}>
   <input
+    {id}
     type="range"
     {min}
     {max}

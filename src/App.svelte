@@ -12,11 +12,17 @@
   import { Card, CardContent } from '$lib/components/ui/card'
   import * as Tabs from '$lib/components/ui/tabs'
   import { defaultQRDesign } from './lib/config'
+  import {
+    initializeFirstSession,
+    loadSession,
+    saveSession,
+    createSession
+  } from './lib/sessionStorage'
+  import SessionSelector from './components/SessionSelector.svelte'
 
-  const STORAGE_KEY = 'qr-generator-state'
-
-  let initialized = false
+  let initialized = $state(false)
   let showQRCodes = $state(false)
+  let currentSessionId = $state<string | null>(null)
   let currentTab = $state('input')
   let designStep = $state('basics')
   let design = $state(structuredClone(defaultQRDesign))
@@ -26,48 +32,53 @@
   let selectedVariables = $state<Set<string>>(new Set())
   let mode = $state<'single' | 'batch'>('single')
   let labelEnabled = $state(false)
+  let previewIndex = $state(0)
 
   function loadState() {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (!saved) return
+    if (!currentSessionId) return
 
-    try {
-      const state = JSON.parse(saved)
-      currentTab = state.currentTab ?? 'input'
-      designStep = state.designStep ?? 'basics'
-      design = state.design ?? structuredClone(defaultQRDesign)
-      csvData = state.csvData ?? null
-      urlPattern = state.urlPattern ?? 'https://example.com/'
-      labelPattern = state.labelPattern ?? ''
-      selectedVariables = new Set(state.selectedVariables ?? [])
-      mode = state.mode ?? 'single'
-      labelEnabled = state.labelEnabled ?? false
-    } catch (error) {
-      console.error('Failed to load state:', error)
+    const state = loadSession(currentSessionId)
+    if (!state) return
+
+    currentTab = state.currentTab
+    designStep = state.designStep
+    design = state.design
+
+    // Ensure padding exists after loading
+    if (!design.qr.padding) {
+      design.qr.padding = {
+        top: 16,
+        right: 16,
+        bottom: 16,
+        left: 16
+      }
     }
+
+    csvData = state.csvData
+    urlPattern = state.urlPattern
+    labelPattern = state.labelPattern
+    selectedVariables = new Set(state.selectedVariables)
+    mode = state.mode
+    labelEnabled = state.labelEnabled
   }
 
   function saveState() {
-    try {
-      const state = {
-        currentTab,
-        designStep,
-        design,
-        csvData,
-        urlPattern,
-        labelPattern,
-        selectedVariables: Array.from(selectedVariables),
-        mode,
-        labelEnabled
-      }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-    } catch (error) {
-      console.error('Failed to save state:', error)
-    }
+    if (!currentSessionId) return
+
+    saveSession(currentSessionId, {
+      currentTab,
+      designStep,
+      design,
+      csvData,
+      urlPattern,
+      labelPattern,
+      selectedVariables: Array.from(selectedVariables),
+      mode,
+      labelEnabled
+    })
   }
 
   function clearState() {
-    localStorage.removeItem(STORAGE_KEY)
     currentTab = 'input'
     designStep = 'basics'
     design = structuredClone(defaultQRDesign)
@@ -77,6 +88,23 @@
     selectedVariables = new Set()
     mode = 'single'
     labelEnabled = false
+    saveState()
+  }
+
+  function createNewSession() {
+    const newSessionId = createSession('New Session')
+    currentSessionId = newSessionId
+    clearState()
+  }
+
+  function handleSessionChange(sessionId: string) {
+    saveState()
+    currentSessionId = sessionId
+    loadState()
+  }
+
+  function handleSessionCreated() {
+    createNewSession()
   }
 
   function handleGenerateQRCodes() {
@@ -85,6 +113,7 @@
 
   $effect(() => {
     if (!initialized) {
+      currentSessionId = initializeFirstSession()
       loadState()
       initialized = true
       return
@@ -92,7 +121,39 @@
 
     currentTab
     designStep
-    JSON.stringify(design)
+    design.qr.size
+    design.qr.padding?.top
+    design.qr.padding?.right
+    design.qr.padding?.bottom
+    design.qr.padding?.left
+    design.qr.errorCorrection
+    design.qr.dpi
+    design.qr.moduleShape
+    design.logo.enabled
+    design.logo.dataURL
+    design.logo.size
+    design.logo.placement
+    design.text.enabled
+    design.text.size
+    design.text.position
+    design.text.offsetX
+    design.text.offsetY
+    design.text.align
+    design.text.font
+    design.text.weight
+    design.text.color
+    design.text.rotation
+    design.colors.background
+    design.colors.foreground
+    design.colors.border
+    design.colors.borderWidth
+    design.colors.eyeColor
+    design.colors.dataModuleColor
+    design.gradient.enabled
+    design.gradient.type
+    design.gradient.start
+    design.gradient.end
+    design.gradient.angle
     csvData
     urlPattern
     labelPattern
@@ -106,9 +167,18 @@
 
 <main class="container mx-auto p-4 md:p-8 max-w-7xl">
   <div class="space-y-6">
-    <div class="text-center space-y-2">
-      <h1 class="text-3xl font-bold tracking-tight">QR Code Generator</h1>
-      <p class="text-muted-foreground">Generate and download QR codes for tile batches</p>
+    <div class="flex items-center justify-between gap-4">
+      <div class="text-center space-y-2 flex-1">
+        <h1 class="text-3xl font-bold tracking-tight">QR Code Generator</h1>
+        <p class="text-muted-foreground">Generate and download QR codes for tile batches</p>
+      </div>
+      {#if currentSessionId}
+        <SessionSelector
+          {currentSessionId}
+          onSessionChange={handleSessionChange}
+          onSessionCreated={handleSessionCreated}
+        />
+      {/if}
     </div>
 
     <Tabs.Root bind:value={currentTab}>
@@ -137,6 +207,7 @@
               bind:selectedVariables
               {mode}
               bind:labelEnabled
+              {previewIndex}
             />
           </Tabs.Content>
 
@@ -213,6 +284,9 @@
             {mode}
             {labelEnabled}
             options={design}
+            onPreviewIndexChange={(index) => {
+              previewIndex = index
+            }}
           />
         </div>
       </div>

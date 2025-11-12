@@ -1,6 +1,7 @@
 import QRCodeStyling from 'qr-code-styling'
-import type { QRDesignOptions, QRMargin } from './config'
+import type { QRDesignOptions, QRPadding } from './config'
 import { calculateLogoPosition } from './logo-utils'
+import { getEstimatedModuleCount, getPixelsPerModule } from './qr-dimensions'
 
 interface GenerateQRParams {
   text: string
@@ -59,7 +60,7 @@ async function addNonCenterLogo(
   canvas: HTMLCanvasElement,
   logoDataURL: string,
   logoSize: number,
-  placement: 'top-left' | 'top-right' | 'bottom-left',
+  placement: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right',
   qrSize: number
 ): Promise<void> {
   const ctx = canvas.getContext('2d')!
@@ -76,51 +77,46 @@ async function addNonCenterLogo(
   })
 }
 
-function detectContentBounds(canvas: HTMLCanvasElement) {
-  const ctx = canvas.getContext('2d')!
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-  const { data, width, height } = imageData
+function calculateContentBounds(qrSize: number) {
+  // Estimate the module count based on QR size
+  const moduleCount = getEstimatedModuleCount(qrSize)
+  const pixelsPerModule = getPixelsPerModule(qrSize, moduleCount)
 
-  let minX = width, maxX = 0, minY = height, maxY = 0
+  // Calculate the actual QR code size (modules * pixels per module)
+  const actualQRSize = moduleCount * pixelsPerModule
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const i = (y * width + x) * 4
-      const r = data[i], g = data[i + 1], b = data[i + 2]
+  // Calculate the offset (centered in the canvas)
+  const offset = Math.floor((qrSize - actualQRSize) / 2)
 
-      if (r < 255 || g < 255 || b < 255) {
-        if (x < minX) minX = x
-        if (x > maxX) maxX = x
-        if (y < minY) minY = y
-        if (y > maxY) maxY = y
-      }
-    }
+  return {
+    minX: offset,
+    maxX: offset + actualQRSize - 1,
+    minY: offset,
+    maxY: offset + actualQRSize - 1
   }
-
-  return { minX, maxX, minY, maxY }
 }
 
-function applyMargin(canvas: HTMLCanvasElement, margin: QRMargin): HTMLCanvasElement {
-  if (margin.top === 0 && margin.right === 0 && margin.bottom === 0 && margin.left === 0) {
+function applyPadding(canvas: HTMLCanvasElement, padding: QRPadding, backgroundColor: string): HTMLCanvasElement {
+  if (padding.top === 0 && padding.right === 0 && padding.bottom === 0 && padding.left === 0) {
     return canvas
   }
 
-  const bounds = detectContentBounds(canvas)
+  const bounds = calculateContentBounds(canvas.width)
   const contentWidth = bounds.maxX - bounds.minX + 1
   const contentHeight = bounds.maxY - bounds.minY + 1
 
   const finalCanvas = document.createElement('canvas')
-  finalCanvas.width = contentWidth + margin.left + margin.right
-  finalCanvas.height = contentHeight + margin.top + margin.bottom
+  finalCanvas.width = contentWidth + padding.left + padding.right
+  finalCanvas.height = contentHeight + padding.top + padding.bottom
 
   const ctx = finalCanvas.getContext('2d')!
-  ctx.fillStyle = 'white'
+  ctx.fillStyle = backgroundColor
   ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height)
 
   ctx.drawImage(
     canvas,
     bounds.minX, bounds.minY, contentWidth, contentHeight,
-    margin.left, margin.top, contentWidth, contentHeight
+    padding.left, padding.top, contentWidth, contentHeight
   )
 
   return finalCanvas
@@ -130,7 +126,8 @@ function addTextLabel(
   canvas: HTMLCanvasElement,
   label: string,
   qrSize: number,
-  textConfig: QRDesignOptions['text']
+  textConfig: QRDesignOptions['text'],
+  backgroundColor: string
 ): HTMLCanvasElement {
   const lineHeight = textConfig.size * 1.5
   const textSpacing = 10
@@ -145,7 +142,7 @@ function addTextLabel(
   finalCanvas.height = finalHeight
 
   const ctx = finalCanvas.getContext('2d')!
-  ctx.fillStyle = 'white'
+  ctx.fillStyle = backgroundColor
   ctx.fillRect(0, 0, finalWidth, finalHeight)
 
   const qrX = isHorizontal && textConfig.position === 'left' ? qrSize : 0
@@ -207,7 +204,7 @@ async function generatePNG(text: string, options: QRDesignOptions, tileLabel?: s
       img.src = reader.result as string
     }
     reader.onerror = reject
-    reader.readAsDataURL(blob)
+    reader.readAsDataURL(blob as Blob)
   })
 
   if (options.logo.enabled && options.logo.dataURL && options.logo.placement !== 'center') {
@@ -215,27 +212,27 @@ async function generatePNG(text: string, options: QRDesignOptions, tileLabel?: s
       canvas,
       options.logo.dataURL,
       options.logo.size,
-      options.logo.placement as 'top-left' | 'top-right' | 'bottom-left',
+      options.logo.placement as 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right',
       options.qr.size
     )
   }
 
   let finalCanvas = tileLabel && options.text.enabled
-    ? addTextLabel(canvas, tileLabel, options.qr.size, options.text)
+    ? addTextLabel(canvas, tileLabel, options.qr.size, options.text, options.colors.background)
     : canvas
 
-  finalCanvas = applyMargin(finalCanvas, {
-    top: Math.floor(options.qr.margin.top),
-    right: Math.floor(options.qr.margin.right),
-    bottom: Math.floor(options.qr.margin.bottom),
-    left: Math.floor(options.qr.margin.left)
-  })
+  finalCanvas = applyPadding(finalCanvas, {
+    top: Math.floor(options.qr.padding.top),
+    right: Math.floor(options.qr.padding.right),
+    bottom: Math.floor(options.qr.padding.bottom),
+    left: Math.floor(options.qr.padding.left)
+  }, options.colors.background)
 
   return finalCanvas.toDataURL()
 }
 
-function applySVGMargin(svgString: string, margin: QRMargin): string {
-  if (margin.top === 0 && margin.right === 0 && margin.bottom === 0 && margin.left === 0) {
+function applySVGPadding(svgString: string, padding: QRPadding, backgroundColor: string): string {
+  if (padding.top === 0 && padding.right === 0 && padding.bottom === 0 && padding.left === 0) {
     return svgString
   }
 
@@ -247,14 +244,19 @@ function applySVGMargin(svgString: string, margin: QRMargin): string {
   const width = Number(widthMatch[1])
   const height = Number(heightMatch[1])
 
-  const newWidth = width + margin.left + margin.right
-  const newHeight = height + margin.top + margin.bottom
+  const newWidth = width + padding.left + padding.right
+  const newHeight = height + padding.top + padding.bottom
 
-  const innerSvg = svgString.replace(/<svg[^>]*>/, '').replace('</svg>', '')
+  // Extract inner SVG content while removing any XML declarations
+  const innerSvg = svgString
+    .replace(/<\?xml[^?]*\?>/g, '') // Remove any XML declarations
+    .replace(/<svg[^>]*>/, '')       // Remove opening SVG tag
+    .replace('</svg>', '')            // Remove closing SVG tag
+    .trim()                           // Clean up whitespace
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${newWidth} ${newHeight}" width="${newWidth}" height="${newHeight}">
-  <rect width="${newWidth}" height="${newHeight}" fill="white"/>
-  <g transform="translate(${margin.left}, ${margin.top})">
+  <rect width="${newWidth}" height="${newHeight}" fill="${backgroundColor}"/>
+  <g transform="translate(${padding.left}, ${padding.top})">
     ${innerSvg}
   </g>
 </svg>`
@@ -265,11 +267,11 @@ async function generateSVG(text: string, options: QRDesignOptions, tileLabel?: s
   const blob = await qrCode.getRawData('svg')
   if (!blob) throw new Error('Failed to generate QR SVG')
 
-  let svgString = await blob.text()
+  let svgString = await (blob as Blob).text()
 
   if (options.logo.enabled && options.logo.dataURL && options.logo.placement !== 'center') {
     const { x, y } = calculateLogoPosition(
-      options.logo.placement,
+      options.logo.placement as 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right',
       options.qr.size,
       options.logo.size
     )
@@ -280,12 +282,12 @@ async function generateSVG(text: string, options: QRDesignOptions, tileLabel?: s
   }
 
   if (!tileLabel || !options.text.enabled) {
-    return applySVGMargin(svgString, {
-      top: Math.floor(options.qr.margin.top),
-      right: Math.floor(options.qr.margin.right),
-      bottom: Math.floor(options.qr.margin.bottom),
-      left: Math.floor(options.qr.margin.left)
-    })
+    return applySVGPadding(svgString, {
+      top: Math.floor(options.qr.padding.top),
+      right: Math.floor(options.qr.padding.right),
+      bottom: Math.floor(options.qr.padding.bottom),
+      left: Math.floor(options.qr.padding.left)
+    }, options.colors.background)
   }
 
   const lineHeight = options.text.size * 1.5
@@ -296,7 +298,12 @@ async function generateSVG(text: string, options: QRDesignOptions, tileLabel?: s
   const finalWidth = isHorizontal ? options.qr.size + options.qr.size : options.qr.size
   const finalHeight = isHorizontal ? options.qr.size : options.qr.size + textSpace
 
-  const innerSvg = svgString.replace(/<svg[^>]*>/, '').replace('</svg>', '')
+  // Extract inner SVG content while removing any XML declarations
+  const innerSvg = svgString
+    .replace(/<\?xml[^?]*\?>/g, '') // Remove any XML declarations
+    .replace(/<svg[^>]*>/, '')       // Remove opening SVG tag
+    .replace('</svg>', '')            // Remove closing SVG tag
+    .trim()                           // Clean up whitespace
   const qrX = isHorizontal && options.text.position === 'left' ? options.qr.size : 0
   const qrY = options.text.position === 'top' ? textSpace : 0
 
@@ -328,19 +335,19 @@ async function generateSVG(text: string, options: QRDesignOptions, tileLabel?: s
     : ''
 
   const svgWithText = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${finalWidth} ${finalHeight}" width="${finalWidth}" height="${finalHeight}">
-  <rect width="${finalWidth}" height="${finalHeight}" fill="white"/>
+  <rect width="${finalWidth}" height="${finalHeight}" fill="${options.colors.background}"/>
   <g transform="translate(${qrX}, ${qrY})">
     ${innerSvg}
   </g>
   <text x="${textX}" y="${textY}" font-family="${options.text.font}, sans-serif" font-size="${options.text.size}" ${fontWeightAttr} text-anchor="${textAnchor}" fill="${options.text.color}" ${rotateAttr}>${tileLabel}</text>
 </svg>`
 
-  return applySVGMargin(svgWithText, {
-    top: Math.floor(options.qr.margin.top),
-    right: Math.floor(options.qr.margin.right),
-    bottom: Math.floor(options.qr.margin.bottom),
-    left: Math.floor(options.qr.margin.left)
-  })
+  return applySVGPadding(svgWithText, {
+    top: Math.floor(options.qr.padding.top),
+    right: Math.floor(options.qr.padding.right),
+    bottom: Math.floor(options.qr.padding.bottom),
+    left: Math.floor(options.qr.padding.left)
+  }, options.colors.background)
 }
 
 export async function generateQR({ text, format, options, tileLabel }: GenerateQRParams): Promise<string> {

@@ -1,4 +1,4 @@
-export interface QRMargin {
+export interface QRPadding {
   top: number
   right: number
   bottom: number
@@ -7,7 +7,7 @@ export interface QRMargin {
 
 export interface QRConfig {
   size: number
-  margin: QRMargin
+  padding: QRPadding
   errorCorrection: 'L' | 'M' | 'Q' | 'H'
   dpi: number
   moduleShape: 'square' | 'dots'
@@ -17,7 +17,7 @@ export interface LogoConfig {
   enabled: boolean
   dataURL: string
   size: number
-  placement: 'center' | 'top-left' | 'top-right' | 'bottom-left'
+  placement: 'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
 }
 
 export interface TextConfig {
@@ -61,7 +61,7 @@ export interface QRDesignOptions {
 export const defaultQRDesign: QRDesignOptions = {
   qr: {
     size: 300,
-    margin: {
+    padding: {
       top: 16,
       right: 16,
       bottom: 16,

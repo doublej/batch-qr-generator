@@ -1,11 +1,12 @@
 <script lang="ts">
   import { Checkbox as CheckboxPrimitive } from 'bits-ui'
   import { cn } from '$lib/utils'
-  import { type ComponentProps } from 'svelte'
 
-  interface CheckboxProps extends ComponentProps<CheckboxPrimitive.Root> {
+  interface CheckboxProps {
     class?: string
     checked?: boolean
+    id?: string
+    onCheckedChange?: (checked: boolean) => void
   }
 
   let { class: className, checked = $bindable(false), ...restProps }: CheckboxProps = $props()

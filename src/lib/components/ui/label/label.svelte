@@ -1,11 +1,12 @@
 <script lang="ts">
   import { Label as LabelPrimitive } from 'bits-ui'
   import { cn } from '$lib/utils'
-  import { type ComponentProps, type Snippet } from 'svelte'
+  import { type Snippet } from 'svelte'
 
-  interface LabelProps extends ComponentProps<LabelPrimitive.Root> {
+  interface LabelProps {
     class?: string
     children?: Snippet
+    for?: string
   }
 
   let { class: className, children, ...restProps }: LabelProps = $props()

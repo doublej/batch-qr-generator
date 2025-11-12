@@ -1,5 +1,5 @@
 export function calculateLogoPosition(
-  placement: 'center' | 'top-left' | 'top-right' | 'bottom-left',
+  placement: 'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right',
   qrSize: number,
   logoSize: number
 ): { x: number; y: number } {
@@ -14,5 +14,7 @@ export function calculateLogoPosition(
       return { x: qrSize - logoSize - offset, y: offset }
     case 'bottom-left':
       return { x: offset, y: qrSize - logoSize - offset }
+    case 'bottom-right':
+      return { x: qrSize - logoSize - offset, y: qrSize - logoSize - offset }
   }
 }

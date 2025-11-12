@@ -4,60 +4,38 @@ import jsPDF from 'jspdf'
 import type { TileBatch, TileMapping, CSVData } from './types'
 import { replaceVariables } from './lib/csv-parser'
 
-import type { QRMargin } from './lib/config'
+import type { QRPadding } from './lib/config'
 
-function detectContentBounds(canvas: HTMLCanvasElement) {
-  const ctx = canvas.getContext('2d')!
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-  const { data, width, height } = imageData
 
-  let minX = width, maxX = 0, minY = height, maxY = 0
-
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const i = (y * width + x) * 4
-      const r = data[i], g = data[i + 1], b = data[i + 2]
-
-      if (r < 255 || g < 255 || b < 255) {
-        if (x < minX) minX = x
-        if (x > maxX) maxX = x
-        if (y < minY) minY = y
-        if (y > maxY) maxY = y
-      }
-    }
-  }
-
-  return { minX, maxX, minY, maxY }
-}
-
-function applyMarginToCanvas(canvas: HTMLCanvasElement, margin: QRMargin): HTMLCanvasElement {
-  if (margin.top === 0 && margin.right === 0 && margin.bottom === 0 && margin.left === 0) {
+function applyPaddingToCanvas(canvas: HTMLCanvasElement, padding: QRPadding): HTMLCanvasElement {
+  if (padding.top === 0 && padding.right === 0 && padding.bottom === 0 && padding.left === 0) {
     return canvas
   }
 
-  const bounds = detectContentBounds(canvas)
-  const contentWidth = bounds.maxX - bounds.minX + 1
-  const contentHeight = bounds.maxY - bounds.minY + 1
+  // Use full canvas dimensions, no content detection
+  const contentWidth = canvas.width
+  const contentHeight = canvas.height
 
   const finalCanvas = document.createElement('canvas')
-  finalCanvas.width = contentWidth + margin.left + margin.right
-  finalCanvas.height = contentHeight + margin.top + margin.bottom
+  finalCanvas.width = contentWidth + padding.left + padding.right
+  finalCanvas.height = contentHeight + padding.top + padding.bottom
 
   const ctx = finalCanvas.getContext('2d')!
   ctx.fillStyle = 'white'
   ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height)
 
+  // Draw the entire canvas with padding
   ctx.drawImage(
     canvas,
-    bounds.minX, bounds.minY, contentWidth, contentHeight,
-    margin.left, margin.top, contentWidth, contentHeight
+    0, 0, contentWidth, contentHeight,
+    padding.left, padding.top, contentWidth, contentHeight
   )
 
   return finalCanvas
 }
 
-function applyMarginToSVG(svgString: string, margin: QRMargin): string {
-  if (margin.top === 0 && margin.right === 0 && margin.bottom === 0 && margin.left === 0) {
+function applyPaddingToSVG(svgString: string, padding: QRPadding): string {
+  if (padding.top === 0 && padding.right === 0 && padding.bottom === 0 && padding.left === 0) {
     return svgString
   }
 
@@ -69,14 +47,19 @@ function applyMarginToSVG(svgString: string, margin: QRMargin): string {
   const width = Number(widthMatch[1])
   const height = Number(heightMatch[1])
 
-  const newWidth = width + margin.left + margin.right
-  const newHeight = height + margin.top + margin.bottom
+  const newWidth = width + padding.left + padding.right
+  const newHeight = height + padding.top + padding.bottom
 
-  const innerSvg = svgString.replace(/<svg[^>]*>/, '').replace('</svg>', '')
+  // Extract inner SVG content while removing any XML declarations
+  const innerSvg = svgString
+    .replace(/<\?xml[^?]*\?>/g, '') // Remove any XML declarations
+    .replace(/<svg[^>]*>/, '')       // Remove opening SVG tag
+    .replace('</svg>', '')            // Remove closing SVG tag
+    .trim()                           // Clean up whitespace
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${newWidth} ${newHeight}" width="${newWidth}" height="${newHeight}">
   <rect width="${newWidth}" height="${newHeight}" fill="white"/>
-  <g transform="translate(${margin.left}, ${margin.top})">
+  <g transform="translate(${padding.left}, ${padding.top})">
     ${innerSvg}
   </g>
 </svg>`
@@ -87,7 +70,7 @@ interface QROptions {
   errorCorrectionLevel?: 'L' | 'M' | 'Q' | 'H'
   logoDataURL?: string
   logoSize?: number
-  logoPlacement?: 'center' | 'top-left' | 'top-right' | 'bottom-left'
+  logoPlacement?: 'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
   textSize?: number
   textPosition?: 'top' | 'bottom' | 'left' | 'right'
   textOffsetX?: number
@@ -99,9 +82,10 @@ interface QROptions {
   textColor?: string
   textRotation?: number
   qrSize?: number
-  qrMargin?: QRMargin
+  qrPadding?: QRPadding
   moduleShape?: 'square' | 'dots'
   eyeShape?: 'square' | 'dots'
+  backgroundColor?: string
   eyeColor?: string
   dataModuleColor?: string
   useGradient?: boolean
@@ -114,7 +98,7 @@ interface QROptions {
 
 export async function generateQRDataURL(text: string, options?: QROptions): Promise<string> {
   const qrSize = options?.qrSize || 300
-  const margin = options?.qrMargin ?? { top: 16, right: 16, bottom: 16, left: 16 }
+  const padding = options?.qrPadding ?? { top: 16, right: 16, bottom: 16, left: 16 }
   const moduleShape = options?.moduleShape || 'square'
   const useGradient = options?.useGradient || false
 
@@ -158,7 +142,7 @@ export async function generateQRDataURL(text: string, options?: QROptions): Prom
       type: moduleShape
     },
     backgroundOptions: {
-      color: '#FFFFFF'
+      color: options?.backgroundColor || '#FFFFFF'
     }
   })
 
@@ -178,20 +162,36 @@ export async function generateQRDataURL(text: string, options?: QROptions): Prom
           if (!shouldCenterLogo && options?.logoDataURL) {
             const logoImg = new Image()
             logoImg.onload = () => {
-              const logoSize = options.logoSize || 60
+              let logoSize = options.logoSize || 60
+
+              // Ensure logo size doesn't exceed QR size
+              const maxLogoSize = qrSize * 0.3 // Max 30% of QR size
+              logoSize = Math.min(logoSize, maxLogoSize)
+
+              // Fixed margin from edges (sufficient to avoid eye patterns)
+              const edgeMargin = 15
+
+              // Calculate position ensuring logo stays within QR bounds
               let logoX = 0
               let logoY = 0
 
               if (logoPlacement === 'top-left') {
-                logoX = 10
-                logoY = 10
+                logoX = edgeMargin
+                logoY = edgeMargin
               } else if (logoPlacement === 'top-right') {
-                logoX = qrSize - logoSize - 10
-                logoY = 10
+                logoX = Math.max(edgeMargin, qrSize - logoSize - edgeMargin)
+                logoY = edgeMargin
               } else if (logoPlacement === 'bottom-left') {
-                logoX = 10
-                logoY = qrSize - logoSize - 10
+                logoX = edgeMargin
+                logoY = Math.max(edgeMargin, qrSize - logoSize - edgeMargin)
+              } else if (logoPlacement === 'bottom-right') {
+                logoX = Math.max(edgeMargin, qrSize - logoSize - edgeMargin)
+                logoY = Math.max(edgeMargin, qrSize - logoSize - edgeMargin)
               }
+
+              // Final boundary check to absolutely ensure logo stays within canvas
+              logoX = Math.max(0, Math.min(logoX, qrSize - logoSize))
+              logoY = Math.max(0, Math.min(logoY, qrSize - logoSize))
 
               ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize)
               resolve()
@@ -275,7 +275,7 @@ export async function generateQRDataURL(text: string, options?: QROptions): Prom
     finalCanvas = textCanvas
   }
 
-  finalCanvas = applyMarginToCanvas(finalCanvas, margin)
+  finalCanvas = applyPaddingToCanvas(finalCanvas, padding)
   return finalCanvas.toDataURL()
 }
 
@@ -310,12 +310,12 @@ export async function downloadQR(
   textPosition: 'top' | 'bottom' = 'bottom',
   showTileLabel: boolean = true,
   qrSize: number = 300,
-  qrMargin: QRMargin = { top: 16, right: 16, bottom: 16, left: 16 },
+  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 },
   moduleShape: 'square' | 'dots' = 'square'
 ): Promise<void> {
   const url = getTileURL(tile.secure_id, baseURL)
   const tileLabel = getTileLabel(batchId, tile.tile_number, totalTiles)
-  const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrMargin, moduleShape })
+  const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding, moduleShape })
   const blob = await (await fetch(dataUrl)).blob()
   const filename = `${batchId}-tile-${tile.tile_number.toString().padStart(3, '0')}.png`
   downloadFile(blob, filename)
@@ -332,7 +332,7 @@ export async function downloadAllQRs(
   textPosition: 'top' | 'bottom' = 'bottom',
   showTileLabel: boolean = true,
   qrSize: number = 300,
-  qrMargin: QRMargin = { top: 16, right: 16, bottom: 16, left: 16 },
+  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 },
   moduleShape: 'square' | 'dots' = 'square'
 ): Promise<void> {
   const zip = new JSZip()
@@ -340,7 +340,7 @@ export async function downloadAllQRs(
   for (const tile of batch.tiles) {
     const url = getTileURL(tile.secure_id, baseURL)
     const tileLabel = getTileLabel(batch.batchId, tile.tile_number, batch.totalTiles)
-    const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrMargin, moduleShape })
+    const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding, moduleShape })
     const blob = await (await fetch(dataUrl)).blob()
     const filename = `tile-${tile.tile_number.toString().padStart(3, '0')}.png`
     zip.file(filename, blob)
@@ -361,7 +361,7 @@ export async function downloadPrintPDF(
   textPosition: 'top' | 'bottom' = 'bottom',
   showTileLabel: boolean = true,
   qrSize: number = 300,
-  qrMargin: QRMargin = { top: 16, right: 16, bottom: 16, left: 16 },
+  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 },
   pageSize: 'A4' | 'A3' = 'A4',
   moduleShape: 'square' | 'dots' = 'square'
 ): Promise<void> {
@@ -391,7 +391,7 @@ export async function downloadPrintPDF(
 
     const url = getTileURL(tile.secure_id, baseURL)
     const tileLabel = getTileLabel(batch.batchId, tile.tile_number, batch.totalTiles)
-    const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrMargin, moduleShape })
+    const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding, moduleShape })
 
     const posInPage = qrCount % qrsPerPage
     const col = posInPage % cols
@@ -424,7 +424,7 @@ export function downloadCSV(batch: TileBatch): void {
 
 export async function generateQRSVG(text: string, options?: QROptions): Promise<string> {
   const qrSize = options?.qrSize || 300
-  const margin = options?.qrMargin ?? { top: 16, right: 16, bottom: 16, left: 16 }
+  const padding = options?.qrPadding ?? { top: 16, right: 16, bottom: 16, left: 16 }
   const moduleShape = options?.moduleShape || 'square'
   const useGradient = options?.useGradient || false
   const logoPlacement = options?.logoPlacement || 'center'
@@ -467,7 +467,7 @@ export async function generateQRSVG(text: string, options?: QROptions): Promise<
       type: moduleShape
     },
     backgroundOptions: {
-      color: '#FFFFFF'
+      color: options?.backgroundColor || '#FFFFFF'
     }
   })
 
@@ -515,7 +515,12 @@ export async function generateQRSVG(text: string, options?: QROptions): Promise<
     const finalWidth = isHorizontal ? qrSize + qrSize : qrSize
     const finalHeight = isHorizontal ? qrSize : qrSize + textSpace
 
-    const innerSvg = svgString.replace(/<svg[^>]*>/, '').replace('</svg>', '')
+    // Extract inner SVG content while removing any XML declarations
+  const innerSvg = svgString
+    .replace(/<\?xml[^?]*\?>/g, '') // Remove any XML declarations
+    .replace(/<svg[^>]*>/, '')       // Remove opening SVG tag
+    .replace('</svg>', '')            // Remove closing SVG tag
+    .trim()                           // Clean up whitespace
 
     const qrX = isHorizontal && textPosition === 'left' ? qrSize : 0
     const qrY = textPosition === 'top' ? textSpace : 0
@@ -554,7 +559,7 @@ export async function generateQRSVG(text: string, options?: QROptions): Promise<
 </svg>`
   }
 
-  return applyMarginToSVG(finalSvg, margin)
+  return applyPaddingToSVG(finalSvg, padding)
 }
 
 export async function downloadQRSVG(
@@ -570,11 +575,11 @@ export async function downloadQRSVG(
   textPosition: 'top' | 'bottom' = 'bottom',
   showTileLabel: boolean = true,
   qrSize: number = 300,
-  qrMargin: QRMargin = { top: 16, right: 16, bottom: 16, left: 16 }
+  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 }
 ): Promise<void> {
   const url = getTileURL(tile.secure_id, baseURL)
   const tileLabel = getTileLabel(batchId, tile.tile_number, totalTiles)
-  const svg = await generateQRSVG(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrMargin })
+  const svg = await generateQRSVG(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding })
   const blob = new Blob([svg], { type: 'image/svg+xml' })
   const filename = `${batchId}-tile-${tile.tile_number.toString().padStart(3, '0')}.svg`
   downloadFile(blob, filename)
@@ -591,7 +596,7 @@ export async function downloadAllQRsSVG(
   textPosition: 'top' | 'bottom' = 'bottom',
   showTileLabel: boolean = true,
   qrSize: number = 300,
-  qrMargin: QRMargin = { top: 16, right: 16, bottom: 16, left: 16 },
+  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 },
   moduleShape: 'square' | 'dots' = 'square'
 ): Promise<void> {
   const zip = new JSZip()
@@ -599,7 +604,7 @@ export async function downloadAllQRsSVG(
   for (const tile of batch.tiles) {
     const url = getTileURL(tile.secure_id, baseURL)
     const tileLabel = getTileLabel(batch.batchId, tile.tile_number, batch.totalTiles)
-    const svg = await generateQRSVG(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrMargin, moduleShape })
+    const svg = await generateQRSVG(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding, moduleShape })
     const filename = `tile-${tile.tile_number.toString().padStart(3, '0')}.svg`
     zip.file(filename, svg)
   }
@@ -620,7 +625,7 @@ export async function downloadAllQRsFromCSV(
   textPosition: 'top' | 'bottom' = 'bottom',
   showTileLabel: boolean = true,
   qrSize: number = 300,
-  qrMargin: QRMargin = { top: 16, right: 16, bottom: 16, left: 16 },
+  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 },
   moduleShape: 'square' | 'dots' = 'square'
 ): Promise<void> {
   const zip = new JSZip()
@@ -629,7 +634,7 @@ export async function downloadAllQRsFromCSV(
     const row = csvData.rows[i]
     const url = replaceVariables(urlPattern, row, i, csvData.rows.length)
     const tileLabel = replaceVariables(labelPattern, row, i, csvData.rows.length)
-    const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrMargin, moduleShape })
+    const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding, moduleShape })
     const blob = await (await fetch(dataUrl)).blob()
     const filename = `qr-${(i + 1).toString().padStart(3, '0')}.png`
     zip.file(filename, blob)
@@ -651,7 +656,7 @@ export async function downloadAllQRsSVGFromCSV(
   textPosition: 'top' | 'bottom' = 'bottom',
   showTileLabel: boolean = true,
   qrSize: number = 300,
-  qrMargin: QRMargin = { top: 16, right: 16, bottom: 16, left: 16 },
+  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 },
   moduleShape: 'square' | 'dots' = 'square'
 ): Promise<void> {
   const zip = new JSZip()
@@ -660,7 +665,7 @@ export async function downloadAllQRsSVGFromCSV(
     const row = csvData.rows[i]
     const url = replaceVariables(urlPattern, row, i, csvData.rows.length)
     const tileLabel = replaceVariables(labelPattern, row, i, csvData.rows.length)
-    const svg = await generateQRSVG(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrMargin, moduleShape })
+    const svg = await generateQRSVG(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding, moduleShape })
     const filename = `qr-${(i + 1).toString().padStart(3, '0')}.svg`
     zip.file(filename, svg)
   }
@@ -681,14 +686,14 @@ export async function downloadPrintPDFFromCSV(
   textPosition: 'top' | 'bottom' = 'bottom',
   showTileLabel: boolean = true,
   qrSize: number = 300,
-  qrMargin: QRMargin = { top: 16, right: 16, bottom: 16, left: 16 },
+  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 },
   pageSize: 'A4' | 'A3' = 'A4',
   moduleShape: 'square' | 'dots' = 'square'
 ): Promise<void> {
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
-    format: pageSize.toLowerCase() as 'a4' | 'a3'
+    format: (pageSize.toLowerCase() as any)
   })
 
   const pageWidth = pdf.internal.pageSize.getWidth()
@@ -712,7 +717,7 @@ export async function downloadPrintPDFFromCSV(
 
     const url = replaceVariables(urlPattern, row, i, csvData.rows.length)
     const tileLabel = replaceVariables(labelPattern, row, i, csvData.rows.length)
-    const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrMargin, moduleShape })
+    const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding, moduleShape })
 
     const posInPage = qrCount % qrsPerPage
     const col = posInPage % cols
