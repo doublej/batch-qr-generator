@@ -8,7 +8,7 @@
     downloadPrintPDFFromCSV,
     downloadCSVData
   } from '../utils'
-  import { replaceVariables } from '../lib/csv-parser'
+  import { replaceVariables, validatePatterns } from '../lib/csv-parser'
   import { Card, CardContent } from '$lib/components/ui/card'
   import { Button } from '$lib/components/ui/button'
   import { Separator } from '$lib/components/ui/separator'
@@ -30,6 +30,36 @@
   } = $props()
 
   let exporting = $state(false)
+
+  function validateBeforeExport(): boolean {
+    if (!csvData) return true
+
+    const validation = validatePatterns(urlPattern, labelEnabled ? labelPattern : '', csvData)
+
+    if (validation.missingVariables.length > 0) {
+      alert(`Error: The following variables are not found in your CSV:\n${validation.missingVariables.join(', ')}\n\nPlease check your pattern or CSV headers.`)
+      return false
+    }
+
+    if (validation.rowsWithMissingData.length > 0) {
+      const limit = 5
+      const examples = validation.rowsWithMissingData.slice(0, limit)
+      const examplesText = examples.map(r =>
+        `Row ${r.rowIndex + 1}: missing ${r.missingFields.join(', ')}`
+      ).join('\n')
+
+      const more = validation.rowsWithMissingData.length > limit
+        ? `\n...and ${validation.rowsWithMissingData.length - limit} more rows`
+        : ''
+
+      const proceed = confirm(
+        `Warning: ${validation.rowsWithMissingData.length} row(s) have empty data:\n\n${examplesText}${more}\n\nThese rows will have empty values in the generated QR codes.\n\nDo you want to continue?`
+      )
+      return proceed
+    }
+
+    return true
+  }
 
   async function handleExportSingle() {
     exporting = true
@@ -72,6 +102,7 @@
 
   async function handleExportZIP(format: 'png' | 'svg') {
     if (!csvData) return
+    if (!validateBeforeExport()) return
     exporting = true
 
     try {
@@ -117,6 +148,7 @@
 
   async function handleExportPDF(pageSize: 'A4' | 'A3') {
     if (!csvData) return
+    if (!validateBeforeExport()) return
     exporting = true
 
     try {

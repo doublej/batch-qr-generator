@@ -63,7 +63,8 @@ export async function downloadPrintPDF(
   const pageWidth = pdf.internal.pageSize.getWidth()
   const pageHeight = pdf.internal.pageSize.getHeight()
   const margin = 10
-  const qrSizeMM = 50
+  const printDPI = 300 // Standard print DPI
+  const qrSizeMM = (options.qr.size / printDPI) * 25.4
   const gap = 5
   const cols = Math.floor((pageWidth - 2 * margin + gap) / (qrSizeMM + gap))
   const rows = Math.floor((pageHeight - 2 * margin + gap) / (qrSizeMM + gap))

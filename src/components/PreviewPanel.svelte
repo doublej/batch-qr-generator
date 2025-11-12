@@ -102,7 +102,7 @@
 
       try {
         const row = csvData.rows[previewIndex]
-        const url = replaceVariables(urlPattern, row, previewIndex, csvData.rows.length)
+        const url = replaceVariables(urlPattern, row, previewIndex, csvData.rows.length, true)
         const label = replaceVariables(labelPattern, row, previewIndex, csvData.rows.length)
         currentURL = url
 
@@ -225,7 +225,7 @@
               {/if}
 
               <div class="text-muted-foreground space-y-1">
-                <div>{options.qr.size}px × {options.qr.size}px (100px grid)</div>
+                <div>{options.qr.size}px × {options.qr.size}px</div>
                 <div class="flex items-center gap-2">
                   <span>Print: {((options.qr.size / dpi) * 25.4).toFixed(1)}mm × {((options.qr.size / dpi) * 25.4).toFixed(1)}mm @</span>
                   <select

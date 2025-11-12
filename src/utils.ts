@@ -374,7 +374,8 @@ export async function downloadPrintPDF(
   const pageWidth = pdf.internal.pageSize.getWidth()
   const pageHeight = pdf.internal.pageSize.getHeight()
   const margin = 10
-  const qrSizeMM = 50
+  const printDPI = 300 // Standard print DPI
+  const qrSizeMM = (qrSize / printDPI) * 25.4
   const gap = 5
   const cols = Math.floor((pageWidth - 2 * margin + gap) / (qrSizeMM + gap))
   const rows = Math.floor((pageHeight - 2 * margin + gap) / (qrSizeMM + gap))
@@ -627,7 +628,7 @@ export async function downloadAllQRsFromCSV(
 
   for (let i = 0; i < csvData.rows.length; i++) {
     const row = csvData.rows[i]
-    const url = replaceVariables(urlPattern, row, i, csvData.rows.length)
+    const url = replaceVariables(urlPattern, row, i, csvData.rows.length, true)
     const tileLabel = replaceVariables(labelPattern, row, i, csvData.rows.length)
     const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrMargin, moduleShape })
     const blob = await (await fetch(dataUrl)).blob()
@@ -658,7 +659,7 @@ export async function downloadAllQRsSVGFromCSV(
 
   for (let i = 0; i < csvData.rows.length; i++) {
     const row = csvData.rows[i]
-    const url = replaceVariables(urlPattern, row, i, csvData.rows.length)
+    const url = replaceVariables(urlPattern, row, i, csvData.rows.length, true)
     const tileLabel = replaceVariables(labelPattern, row, i, csvData.rows.length)
     const svg = await generateQRSVG(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrMargin, moduleShape })
     const filename = `qr-${(i + 1).toString().padStart(3, '0')}.svg`
@@ -694,7 +695,8 @@ export async function downloadPrintPDFFromCSV(
   const pageWidth = pdf.internal.pageSize.getWidth()
   const pageHeight = pdf.internal.pageSize.getHeight()
   const margin = 10
-  const qrSizeMM = 50
+  const printDPI = 300 // Standard print DPI
+  const qrSizeMM = (qrSize / printDPI) * 25.4
   const gap = 5
   const cols = Math.floor((pageWidth - 2 * margin + gap) / (qrSizeMM + gap))
   const rows = Math.floor((pageHeight - 2 * margin + gap) / (qrSizeMM + gap))
@@ -710,7 +712,7 @@ export async function downloadPrintPDFFromCSV(
       currentPage++
     }
 
-    const url = replaceVariables(urlPattern, row, i, csvData.rows.length)
+    const url = replaceVariables(urlPattern, row, i, csvData.rows.length, true)
     const tileLabel = replaceVariables(labelPattern, row, i, csvData.rows.length)
     const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrMargin, moduleShape })
 
@@ -740,7 +742,7 @@ export function downloadCSVData(
     headers,
     ...csvData.rows.map((row, idx) => [
       ...csvData.headers.map(h => row[h] || ''),
-      replaceVariables(urlPattern, row, idx, csvData.rows.length),
+      replaceVariables(urlPattern, row, idx, csvData.rows.length, true),
       replaceVariables(labelPattern, row, idx, csvData.rows.length),
       String(csvData.rows.length)
     ])

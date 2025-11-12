@@ -72,7 +72,7 @@
         case '_index': return '0'
         case '_row_reverse': return String(Object.keys(firstRowData).length || 1)
         case '_total': return String(Object.keys(firstRowData).length || 1)
-        case '_date': return new Date().toLocaleDateString()
+        case '_date': return new Date().toISOString().split('T')[0]
         case '_timestamp': return String(Date.now())
         default: return variableName
       }

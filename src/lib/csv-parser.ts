@@ -80,7 +80,8 @@ export function replaceVariables(
   pattern: string,
   row: Record<string, string>,
   rowIndex?: number,
-  totalRows?: number
+  totalRows?: number,
+  urlEncode: boolean = false
 ): string {
   let result = pattern
 
@@ -95,7 +96,8 @@ export function replaceVariables(
 
   for (const match of matches) {
     const variableName = match[1]
-    const value = allVariables[variableName] || ''
+    const rawValue = allVariables[variableName] || ''
+    const value = urlEncode ? encodeURIComponent(rawValue) : rawValue
     result = result.replace(`{${variableName}}`, value)
   }
 
@@ -106,4 +108,43 @@ export function extractVariablesFromPattern(pattern: string): string[] {
   const variablePattern = /\{([^}]+)\}/g
   const matches = Array.from(pattern.matchAll(variablePattern))
   return matches.map(m => m[1])
+}
+
+export interface ValidationResult {
+  valid: boolean
+  missingVariables: string[]
+  rowsWithMissingData: Array<{ rowIndex: number; missingFields: string[] }>
+}
+
+export function validatePatterns(
+  urlPattern: string,
+  labelPattern: string,
+  csvData: { headers: string[]; rows: Record<string, string>[] }
+): ValidationResult {
+  const builtInVars = ['_row', '_index', '_row_reverse', '_total', '_date', '_timestamp']
+  const availableFields = [...csvData.headers, ...builtInVars]
+
+  const urlVariables = extractVariablesFromPattern(urlPattern)
+  const labelVariables = extractVariablesFromPattern(labelPattern)
+  const allVariables = [...new Set([...urlVariables, ...labelVariables])]
+
+  // Check for undefined variables
+  const missingVariables = allVariables.filter(v => !availableFields.includes(v))
+
+  // Check for rows with empty/missing data
+  const dataVariables = allVariables.filter(v => !builtInVars.includes(v))
+  const rowsWithMissingData: Array<{ rowIndex: number; missingFields: string[] }> = []
+
+  csvData.rows.forEach((row, index) => {
+    const missingFields = dataVariables.filter(v => !row[v] || row[v].trim() === '')
+    if (missingFields.length > 0) {
+      rowsWithMissingData.push({ rowIndex: index, missingFields })
+    }
+  })
+
+  return {
+    valid: missingVariables.length === 0 && rowsWithMissingData.length === 0,
+    missingVariables,
+    rowsWithMissingData
+  }
 }
