@@ -2,6 +2,8 @@
   import { getAllSessions, updateSessionName, deleteSession, getSessionSize, downloadSession, uploadSession } from '../lib/sessionStorage'
   import type { Session } from '../lib/sessionStorage'
   import { _ } from '../lib/i18n'
+  import { Button } from '$lib/components/ui/button'
+  import { Input } from '$lib/components/ui/input'
 
   interface Props {
     currentSessionId: string | null
@@ -103,47 +105,55 @@
   }
 </script>
 
-<div class="relative">
-  <button
-    onclick={toggleDropdown}
-    class="px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 transition flex items-center gap-2"
-  >
-    <span class="truncate max-w-xs">{getCurrentSessionName()}</span>
-    <svg
-      class="w-4 h-4 transition-transform {isOpen ? 'rotate-180' : ''}"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
+<div class="flex flex-col gap-1">
+  <label class="text-xs text-muted-foreground font-medium">{$_('sessionSelector.label', { default: 'Session' })}</label>
+  <div class="relative">
+    <Button
+      onclick={toggleDropdown}
+      variant="outline"
+      size="sm"
+      class="flex items-center gap-2"
     >
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-    </svg>
-  </button>
+      <span class="truncate max-w-xs">{getCurrentSessionName()}</span>
+      <svg
+        class="w-4 h-4 transition-transform {isOpen ? 'rotate-180' : ''}"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+      </svg>
+    </Button>
 
   {#if isOpen}
-    <div class="absolute top-full left-0 mt-1 w-80 bg-white border border-gray-300 rounded shadow-lg z-50">
-      <div class="p-3 border-b border-gray-200 space-y-2">
-        <button
+    <div class="absolute top-full left-0 mt-1 w-80 bg-white border border-input rounded-md shadow-lg z-50">
+      <div class="p-3 border-b border-input space-y-2">
+        <Button
           onclick={() => {
             onSessionCreated()
             loadSessions()
             isOpen = false
           }}
-          class="w-full px-3 py-2 text-sm text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition flex items-center justify-center gap-2"
+          variant="secondary"
+          size="sm"
+          class="w-full flex items-center justify-center gap-2 rounded"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
           {$_('sessionSelector.newSession')}
-        </button>
-        <button
+        </Button>
+        <Button
           onclick={openFileDialog}
-          class="w-full px-3 py-2 text-sm text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition flex items-center justify-center gap-2"
+          variant="secondary"
+          size="sm"
+          class="w-full flex items-center justify-center gap-2 rounded"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
           </svg>
           {$_('sessionSelector.loadSession')}
-        </button>
+        </Button>
         <input
           bind:this={fileInput}
           type="file"
@@ -155,47 +165,51 @@
 
       <div class="max-h-96 overflow-y-auto">
         {#each sessions as session (session.id)}
-          <div class="border-b border-gray-100 last:border-b-0">
+          <div class="border-b border-input last:border-b-0">
             {#if editingSessionId === session.id}
               <div class="p-3 space-y-2">
-                <input
+                <Input
                   type="text"
                   bind:value={editingName}
-                  class="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                  size="sm"
                   autofocus
                 />
                 <div class="flex gap-2">
-                  <button
+                  <Button
                     onclick={saveEditing}
-                    class="flex-1 px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition"
+                    variant="default"
+                    size="sm"
+                    class="flex-1"
                   >
                     {$_('sessionSelector.save')}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onclick={cancelEditing}
-                    class="flex-1 px-2 py-1 text-xs bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition"
+                    variant="outline"
+                    size="sm"
+                    class="flex-1"
                   >
                     {$_('sessionSelector.cancel')}
-                  </button>
+                  </Button>
                 </div>
               </div>
             {:else}
               <div
-                class="p-3 hover:bg-gray-50 cursor-pointer transition flex justify-between items-center {currentSessionId ===
+                class="p-3 hover:bg-accent cursor-pointer transition flex justify-between items-center {currentSessionId ===
                 session.id
-                  ? 'bg-blue-50'
+                  ? 'bg-accent'
                   : ''}"
               >
                 <div class="flex-1 min-w-0" onclick={() => selectSession(session.id)}>
                   <p class="text-sm font-medium truncate">{session.name}</p>
-                  <p class="text-xs text-gray-500">
+                  <p class="text-xs text-muted-foreground">
                     {new Date(session.updatedAt).toLocaleDateString()} · {formatSize(getSessionSize(session.id))}
                   </p>
                 </div>
                 <div class="flex gap-1 ml-2 flex-shrink-0">
                   <button
                     onclick={() => downloadSession(session.id)}
-                    class="p-1 text-gray-600 hover:bg-blue-100 hover:text-blue-600 rounded transition"
+                    class="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition"
                     title={$_('sessionSelector.download')}
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -204,7 +218,7 @@
                   </button>
                   <button
                     onclick={() => startEditing(session)}
-                    class="p-1 text-gray-600 hover:bg-gray-200 rounded transition"
+                    class="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition"
                     title={$_('sessionSelector.rename')}
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,7 +227,7 @@
                   </button>
                   <button
                     onclick={() => handleDeleteSession(session.id)}
-                    class="p-1 text-gray-600 hover:bg-red-100 hover:text-red-600 rounded transition"
+                    class="p-1 text-muted-foreground hover:text-destructive hover:bg-muted rounded transition"
                     title={$_('sessionSelector.delete')}
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -228,4 +242,5 @@
       </div>
     </div>
   {/if}
+  </div>
 </div>

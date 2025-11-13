@@ -169,13 +169,8 @@
 
 <main class="container mx-auto p-4 md:p-8 max-w-7xl">
   <div class="space-y-6">
-    <div class="flex items-center justify-between gap-4">
-      <div class="text-center space-y-2 flex-1">
-        <h1 class="text-3xl font-bold tracking-tight">{$_('app.title')}</h1>
-        <p class="text-muted-foreground">{$_('app.description')}</p>
-      </div>
-      <div class="flex items-center gap-2">
-        <LanguageSwitcher />
+    <div class="flex items-start justify-between gap-4">
+      <div class="flex items-start gap-4">
         {#if currentSessionId}
           <SessionSelector
             {currentSessionId}
@@ -183,6 +178,13 @@
             onSessionCreated={handleSessionCreated}
           />
         {/if}
+      </div>
+      <div class="text-center space-y-2 flex-1">
+        <h1 class="text-3xl font-bold tracking-tight">{$_('app.title')}</h1>
+        <p class="text-muted-foreground">{$_('app.description')}</p>
+      </div>
+      <div class="flex items-start gap-2">
+        <LanguageSwitcher />
       </div>
     </div>
 

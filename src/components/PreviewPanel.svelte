@@ -71,6 +71,9 @@
           errorCorrectionLevel: options.qr.errorCorrection,
           logoDataURL: options.logo.enabled ? options.logo.dataURL : '',
           logoSize: options.logo.size,
+          logoWidth: options.logo.width,
+          logoHeight: options.logo.height,
+          logoFit: options.logo.fit,
           logoPlacement: options.logo.placement,
           textSize: options.text.size,
           textPosition: options.text.position,
@@ -123,6 +126,9 @@
           errorCorrectionLevel: options.qr.errorCorrection,
           logoDataURL: options.logo.enabled ? options.logo.dataURL : '',
           logoSize: options.logo.size,
+          logoWidth: options.logo.width,
+          logoHeight: options.logo.height,
+          logoFit: options.logo.fit,
           logoPlacement: options.logo.placement,
           textSize: options.text.size,
           textPosition: options.text.position,
@@ -200,7 +206,7 @@
   }
 
   $effect(() => {
-    // Trigger on any option changes including padding
+    // Trigger on option changes
     options.qr.padding?.top
     options.qr.padding?.right
     options.qr.padding?.bottom
@@ -211,6 +217,9 @@
     options.logo.enabled
     options.logo.dataURL
     options.logo.size
+    options.logo.width
+    options.logo.height
+    options.logo.fit
     options.logo.placement
     options.text.enabled
     options.text.size
@@ -231,6 +240,7 @@
     options.gradient.angle
     labelEnabled
     labelPattern
+    urlPattern
 
     if (mode === 'single' && urlPattern) {
       updatePreview()
@@ -238,6 +248,16 @@
       updatePreview()
     } else {
       previewQR = ''
+    }
+  })
+
+  $effect(() => {
+    // Separate effect for preview index changes only
+    previewIndex
+    csvData?.rows.length
+
+    if (mode === 'batch' && csvData && urlPattern) {
+      updatePreview()
     }
   })
 </script>

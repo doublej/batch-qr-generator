@@ -1,5 +1,6 @@
 <script lang="ts">
   import { locale } from '../lib/i18n'
+  import { Button } from '$lib/components/ui/button'
 
   const languages = [
     { code: 'en-US', label: 'English', flag: '🇺🇸' },
@@ -51,12 +52,14 @@
 </script>
 
 <div class="relative language-switcher">
-  <button
+  <Button
     onclick={toggleDropdown}
-    class="px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 transition flex items-center gap-2"
+    variant="outline"
+    size="sm"
+    class="flex items-center gap-2"
     aria-label="Select language"
   >
-    <span class="text-lg">{getCurrentLanguage().flag}</span>
+    <span class="text-base">{getCurrentLanguage().flag}</span>
     <span class="hidden sm:inline">{getCurrentLanguage().label}</span>
     <svg
       class="w-4 h-4 transition-transform {isOpen ? 'rotate-180' : ''}"
@@ -66,16 +69,16 @@
     >
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
     </svg>
-  </button>
+  </Button>
 
   {#if isOpen}
-    <div class="absolute top-full right-0 mt-1 w-48 bg-white border border-gray-300 rounded shadow-lg z-50">
+    <div class="absolute top-full right-0 mt-1 w-48 bg-white border border-input rounded-md shadow-lg z-50">
       {#each languages as language (language.code)}
         <button
           onclick={() => selectLanguage(language.code)}
-          class="w-full px-4 py-2 text-sm text-left hover:bg-gray-50 transition flex items-center gap-3 {currentLocale === language.code ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}"
+          class="w-full px-4 py-2 text-sm text-left transition flex items-center gap-3 hover:bg-accent {currentLocale === language.code ? 'bg-accent text-accent-foreground' : 'text-foreground'}"
         >
-          <span class="text-lg">{language.flag}</span>
+          <span class="text-base">{language.flag}</span>
           <span>{language.label}</span>
           {#if currentLocale === language.code}
             <svg class="w-4 h-4 ml-auto" fill="currentColor" viewBox="0 0 20 20">

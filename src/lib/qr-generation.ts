@@ -1,6 +1,6 @@
 import QRCode from 'qrcode'
 import type { QRDesignOptions, QRPadding } from './config'
-import { calculateLogoPosition } from './logo-utils'
+import { calculateLogoPosition, calculateLogoDimensions, resolveLogoDimensions } from './logo-utils'
 import { getEstimatedModuleCount, getPixelsPerModule } from './qr-dimensions'
 
 interface GenerateQRParams {
@@ -29,7 +29,7 @@ async function createBasicQRSVG(text: string, options: QRDesignOptions): Promise
 async function addNonCenterLogo(
   canvas: HTMLCanvasElement,
   logoDataURL: string,
-  logoSize: number,
+  logoConfig: { size: number; width?: number; height?: number; fit: string },
   placement: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right',
   qrSize: number
 ): Promise<void> {
@@ -38,8 +38,28 @@ async function addNonCenterLogo(
 
   return new Promise((resolve, reject) => {
     logoImg.onload = () => {
-      const { x, y } = calculateLogoPosition(placement, qrSize, logoSize)
-      ctx.drawImage(logoImg, x, y, logoSize, logoSize)
+      const targetWidth = logoConfig.width ?? logoConfig.size
+      const targetHeight = logoConfig.height ?? logoConfig.size
+      const { width, height } = resolveLogoDimensions(
+        logoConfig,
+        logoImg.naturalWidth,
+        logoImg.naturalHeight,
+        qrSize
+      )
+
+      if (logoConfig.fit === 'cover') {
+        const { x, y } = calculateLogoDimensions(placement, qrSize, targetWidth, targetHeight)
+        ctx.save()
+        ctx.rect(x, y, targetWidth, targetHeight)
+        ctx.clip()
+        const offsetX = x - (width - targetWidth) / 2
+        const offsetY = y - (height - targetHeight) / 2
+        ctx.drawImage(logoImg, offsetX, offsetY, width, height)
+        ctx.restore()
+      } else {
+        const { x, y } = calculateLogoDimensions(placement, qrSize, width, height)
+        ctx.drawImage(logoImg, x, y, width, height)
+      }
       resolve()
     }
     logoImg.onerror = reject
@@ -177,7 +197,7 @@ async function generatePNG(text: string, options: QRDesignOptions, tileLabel?: s
     await addNonCenterLogo(
       canvas,
       options.logo.dataURL,
-      options.logo.size,
+      { size: options.logo.size, width: options.logo.width, height: options.logo.height, fit: options.logo.fit },
       options.logo.placement as 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right',
       options.qr.size
     )
@@ -232,15 +252,49 @@ async function generateSVG(text: string, options: QRDesignOptions, tileLabel?: s
   let svgString = await createBasicQRSVG(text, options)
 
   if (options.logo.enabled && options.logo.dataURL && options.logo.placement !== 'center') {
-    const { x, y } = calculateLogoPosition(
-      options.logo.placement as 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right',
-      options.qr.size,
-      options.logo.size
+    const logoImg = new Image()
+    await new Promise((resolve, reject) => {
+      logoImg.onload = resolve
+      logoImg.onerror = reject
+      logoImg.src = options.logo.dataURL
+    })
+
+    const targetWidth = options.logo.width ?? options.logo.size
+    const targetHeight = options.logo.height ?? options.logo.size
+    const { width, height } = resolveLogoDimensions(
+      { size: options.logo.size, width: options.logo.width, height: options.logo.height, fit: options.logo.fit },
+      logoImg.naturalWidth,
+      logoImg.naturalHeight,
+      options.qr.size
     )
-    svgString = svgString.replace(
-      '</svg>',
-      `<image href="${options.logo.dataURL}" x="${x}" y="${y}" width="${options.logo.size}" height="${options.logo.size}"/></svg>`
-    )
+
+    if (options.logo.fit === 'cover') {
+      const { x, y } = calculateLogoDimensions(
+        options.logo.placement as 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right',
+        options.qr.size,
+        targetWidth,
+        targetHeight
+      )
+      const offsetX = x - (width - targetWidth) / 2
+      const offsetY = y - (height - targetHeight) / 2
+      const clipId = `logo-clip-${Math.random().toString(36).substr(2, 9)}`
+      svgString = svgString.replace(
+        '</svg>',
+        `<defs><clipPath id="${clipId}"><rect x="${x}" y="${y}" width="${targetWidth}" height="${targetHeight}"/></clipPath></defs><image href="${options.logo.dataURL}" x="${offsetX}" y="${offsetY}" width="${width}" height="${height}" clip-path="url(#${clipId})"/></svg>`
+      )
+    } else {
+      const { x, y } = calculateLogoDimensions(
+        options.logo.placement as 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right',
+        options.qr.size,
+        width,
+        height
+      )
+      const preserveAspectRatio = options.logo.fit === 'fill' ? 'none' : 'xMidYMid meet'
+      svgString = svgString.replace(
+        '</svg>',
+        `<image href="${options.logo.dataURL}" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="${preserveAspectRatio}"/></svg>`
+      )
+    }
   }
 
   if (!tileLabel || !options.text.enabled) {

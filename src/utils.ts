@@ -70,6 +70,9 @@ interface QROptions {
   errorCorrectionLevel?: 'L' | 'M' | 'Q' | 'H'
   logoDataURL?: string
   logoSize?: number
+  logoWidth?: number
+  logoHeight?: number
+  logoFit?: 'contain' | 'cover' | 'fill' | 'scale-down'
   logoPlacement?: 'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
   textSize?: number
   textPosition?: 'top' | 'bottom' | 'left' | 'right'
@@ -136,36 +139,82 @@ export async function generateQRDataURL(text: string, options?: QROptions): Prom
     const logoImg = new Image()
     await new Promise<void>((resolve, reject) => {
       logoImg.onload = () => {
-        let logoSize = options.logoSize || 60
-        const maxLogoSize = qrSize * 0.3
-        logoSize = Math.min(logoSize, maxLogoSize)
+        const baseSize = options.logoSize || 60
+        const targetWidth = options.logoWidth ?? baseSize
+        const targetHeight = options.logoHeight ?? baseSize
+        const fit = options.logoFit || 'contain'
         const edgeMargin = 15
         const logoPlacement = options.logoPlacement || 'center'
+
+        let logoWidth = targetWidth
+        let logoHeight = targetHeight
+        let drawWidth = targetWidth
+        let drawHeight = targetHeight
+
+        if (fit === 'fill') {
+          logoWidth = targetWidth
+          logoHeight = targetHeight
+          drawWidth = targetWidth
+          drawHeight = targetHeight
+        } else if (fit === 'contain') {
+          const scale = Math.min(targetWidth / logoImg.naturalWidth, targetHeight / logoImg.naturalHeight)
+          logoWidth = logoImg.naturalWidth * scale
+          logoHeight = logoImg.naturalHeight * scale
+          drawWidth = logoWidth
+          drawHeight = logoHeight
+        } else if (fit === 'cover') {
+          const scale = Math.max(targetWidth / logoImg.naturalWidth, targetHeight / logoImg.naturalHeight)
+          logoWidth = logoImg.naturalWidth * scale
+          logoHeight = logoImg.naturalHeight * scale
+          drawWidth = targetWidth
+          drawHeight = targetHeight
+        } else if (fit === 'scale-down') {
+          if (logoImg.naturalWidth <= targetWidth && logoImg.naturalHeight <= targetHeight) {
+            logoWidth = logoImg.naturalWidth
+            logoHeight = logoImg.naturalHeight
+          } else {
+            const scale = Math.min(targetWidth / logoImg.naturalWidth, targetHeight / logoImg.naturalHeight)
+            logoWidth = logoImg.naturalWidth * scale
+            logoHeight = logoImg.naturalHeight * scale
+          }
+          drawWidth = logoWidth
+          drawHeight = logoHeight
+        }
 
         let logoX = 0
         let logoY = 0
 
         if (logoPlacement === 'center') {
-          logoX = (qrSize - logoSize) / 2
-          logoY = (qrSize - logoSize) / 2
+          logoX = (qrSize - drawWidth) / 2
+          logoY = (qrSize - drawHeight) / 2
         } else if (logoPlacement === 'top-left') {
           logoX = edgeMargin
           logoY = edgeMargin
         } else if (logoPlacement === 'top-right') {
-          logoX = Math.max(edgeMargin, qrSize - logoSize - edgeMargin)
+          logoX = Math.max(edgeMargin, qrSize - drawWidth - edgeMargin)
           logoY = edgeMargin
         } else if (logoPlacement === 'bottom-left') {
           logoX = edgeMargin
-          logoY = Math.max(edgeMargin, qrSize - logoSize - edgeMargin)
+          logoY = Math.max(edgeMargin, qrSize - drawHeight - edgeMargin)
         } else if (logoPlacement === 'bottom-right') {
-          logoX = Math.max(edgeMargin, qrSize - logoSize - edgeMargin)
-          logoY = Math.max(edgeMargin, qrSize - logoSize - edgeMargin)
+          logoX = Math.max(edgeMargin, qrSize - drawWidth - edgeMargin)
+          logoY = Math.max(edgeMargin, qrSize - drawHeight - edgeMargin)
         }
 
-        logoX = Math.max(0, Math.min(logoX, qrSize - logoSize))
-        logoY = Math.max(0, Math.min(logoY, qrSize - logoSize))
+        logoX = Math.max(0, Math.min(logoX, qrSize - drawWidth))
+        logoY = Math.max(0, Math.min(logoY, qrSize - drawHeight))
 
-        ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize)
+        if (fit === 'cover') {
+          ctx.save()
+          ctx.rect(logoX, logoY, targetWidth, targetHeight)
+          ctx.clip()
+          const offsetX = logoX - (logoWidth - targetWidth) / 2
+          const offsetY = logoY - (logoHeight - targetHeight) / 2
+          ctx.drawImage(logoImg, offsetX, offsetY, logoWidth, logoHeight)
+          ctx.restore()
+        } else {
+          ctx.drawImage(logoImg, logoX, logoY, drawWidth, drawHeight)
+        }
         resolve()
       }
       logoImg.onerror = reject

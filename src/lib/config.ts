@@ -17,6 +17,9 @@ export interface LogoConfig {
   enabled: boolean
   dataURL: string
   size: number
+  width?: number
+  height?: number
+  fit: 'contain' | 'cover' | 'fill' | 'scale-down'
   placement: 'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
 }
 
@@ -75,6 +78,7 @@ export const defaultQRDesign: QRDesignOptions = {
     enabled: true,
     dataURL: '',
     size: 60,
+    fit: 'contain',
     placement: 'center'
   },
   text: {
