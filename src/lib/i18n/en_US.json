@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "QR Code Generator",
-    "description": "Generate and download QR codes for tile batches"
+    "description": "Generate and download QR codes for any workflow"
   },
   "tabs": {
     "input": "Input",
@@ -159,6 +159,18 @@
     "failedGenerate": "Failed to generate QR codes",
     "cancel": "Cancel",
     "close": "Close"
+  },
+  "tooltips": {
+    "csvUpload": "Upload a CSV with one row per QR entry, including a unique number, the secure_id token, and optionally a status.",
+    "labelToggle": "Enable this to print a custom text label on each QR code using the pattern below.",
+    "urlPattern": "Combine plain text with variables (for example {secure_id}) to decide where each QR entry should redirect.",
+    "labelPattern": "Compose the printed caption by mixing CSV columns and built-in variables.",
+    "qrSize": "Controls the pixel dimensions of every generated QR and influences the physical size shown in the preview.",
+    "qrPadding": "Adds quiet-zone spacing around the code so scanners can lock on more reliably.",
+    "errorCorrection": "Higher levels survive more damage or overprints, but they also make the pattern denser; Medium suits most workflows.",
+    "previewDpi": "Pick the printer DPI you expect to estimate the final physical dimensions above.",
+    "exportZip": "Creates a ZIP archive that includes every QR entry as its own PNG or SVG file.",
+    "exportCsv": "Exports your CSV together with the resolved QR URL, generated label, and total row count."
   },
   "errors": {
     "csvParsing": "Error parsing CSV: {error}"

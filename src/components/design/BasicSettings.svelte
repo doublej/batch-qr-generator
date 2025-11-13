@@ -9,6 +9,7 @@
     calculateValidQRSizes
   } from '$lib/qr-dimensions'
   import { _ } from '../../lib/i18n'
+  import InfoTooltip from '../InfoTooltip.svelte'
 
   let { config = $bindable() }: { config: QRConfig } = $props()
 
@@ -48,40 +49,26 @@
     const snappedSize = snapToValidQRSize(sizeArray[0], MIN_SIZE, MAX_SIZE)
     sizeArray[0] = snappedSize
     config.size = snappedSize
-  })
 
-  $effect(() => {
+    // Ensure padding exists
     if (!config.padding) {
       config.padding = { top: 16, right: 16, bottom: 16, left: 16 }
     }
+
+    // Update all padding values
     config.padding.top = paddingTopArray[0]
-  })
-
-  $effect(() => {
-    if (!config.padding) {
-      config.padding = { top: 16, right: 16, bottom: 16, left: 16 }
-    }
     config.padding.right = paddingRightArray[0]
-  })
-
-  $effect(() => {
-    if (!config.padding) {
-      config.padding = { top: 16, right: 16, bottom: 16, left: 16 }
-    }
     config.padding.bottom = paddingBottomArray[0]
-  })
-
-  $effect(() => {
-    if (!config.padding) {
-      config.padding = { top: 16, right: 16, bottom: 16, left: 16 }
-    }
     config.padding.left = paddingLeftArray[0]
   })
 </script>
 
 <div class="space-y-4">
   <div class="space-y-2">
-    <Label for="qr-size">{$_('basicSettings.qrSize')}</Label>
+    <div class="flex items-center justify-between gap-2">
+      <Label for="qr-size">{$_('basicSettings.qrSize')}</Label>
+      <InfoTooltip text={$_('tooltips.qrSize')} side="left" />
+    </div>
     <div class="flex items-center gap-2">
       <Slider id="qr-size" bind:value={sizeArray} min={MIN_SIZE} max={MAX_SIZE} step={1} class="flex-1" />
       <span class="text-sm font-mono w-16 text-right">{sizeArray[0]}px</span>
@@ -92,7 +79,10 @@
   </div>
 
   <div class="space-y-2">
-    <Label>{$_('basicSettings.padding')}</Label>
+    <div class="flex items-center justify-between gap-2">
+      <Label>{$_('basicSettings.padding')}</Label>
+      <InfoTooltip text={$_('tooltips.qrPadding')} side="left" />
+    </div>
     <div class="grid grid-cols-2 gap-3">
       <div class="space-y-1">
         <Label for="padding-top" class="text-xs text-muted-foreground">{$_('basicSettings.paddingTop')}</Label>
@@ -126,7 +116,10 @@
   </div>
 
   <div class="space-y-2">
-    <Label for="error-correction">{$_('basicSettings.errorCorrection')}</Label>
+    <div class="flex items-center justify-between gap-2">
+      <Label for="error-correction">{$_('basicSettings.errorCorrection')}</Label>
+      <InfoTooltip text={$_('tooltips.errorCorrection')} side="left" />
+    </div>
     <select
       id="error-correction"
       bind:value={config.errorCorrection}

@@ -10,17 +10,7 @@
   ]
 
   let isOpen = $state(false)
-  let currentLocale = $state('en-US')
-
-  // Subscribe to locale changes
-  $effect(() => {
-    const unsubscribe = locale.subscribe(value => {
-      if (value) {
-        currentLocale = value
-      }
-    })
-    return unsubscribe
-  })
+  let currentLocale = $derived($locale || 'en-US')
 
   function getCurrentLanguage() {
     return languages.find(l => l.code === currentLocale) || languages[0]

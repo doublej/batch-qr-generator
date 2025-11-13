@@ -329,7 +329,7 @@ export async function downloadQR(
   const tileLabel = getTileLabel(batchId, tile.tile_number, totalTiles)
   const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding, moduleShape })
   const blob = await (await fetch(dataUrl)).blob()
-  const filename = `${batchId}-tile-${tile.tile_number.toString().padStart(3, '0')}.png`
+  const filename = `${batchId}-entry-${tile.tile_number.toString().padStart(3, '0')}.png`
   downloadFile(blob, filename)
 }
 
@@ -354,7 +354,7 @@ export async function downloadAllQRs(
     const tileLabel = getTileLabel(batch.batchId, tile.tile_number, batch.totalTiles)
     const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding, moduleShape })
     const blob = await (await fetch(dataUrl)).blob()
-    const filename = `tile-${tile.tile_number.toString().padStart(3, '0')}.png`
+    const filename = `entry-${tile.tile_number.toString().padStart(3, '0')}.png`
     zip.file(filename, blob)
   }
 
@@ -421,7 +421,7 @@ export async function downloadPrintPDF(
 
 export function downloadCSV(batch: TileBatch): void {
   const rows = [
-    ['tile_number', 'secure_id', 'status'],
+    ['entry_number', 'secure_id', 'status'],
     ...batch.tiles.map(tile => [
       tile.tile_number.toString(),
       tile.secure_id,
@@ -431,7 +431,7 @@ export function downloadCSV(batch: TileBatch): void {
 
   const csv = rows.map(row => row.join(',')).join('\n')
   const blob = new Blob([csv], { type: 'text/csv' })
-  downloadFile(blob, `${batch.batchId}-tiles.csv`)
+  downloadFile(blob, `${batch.batchId}-entries.csv`)
 }
 
 export async function generateQRSVG(text: string, options?: QROptions): Promise<string> {
@@ -557,7 +557,7 @@ export async function downloadQRSVG(
   const tileLabel = getTileLabel(batchId, tile.tile_number, totalTiles)
   const svg = await generateQRSVG(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding })
   const blob = new Blob([svg], { type: 'image/svg+xml' })
-  const filename = `${batchId}-tile-${tile.tile_number.toString().padStart(3, '0')}.svg`
+  const filename = `${batchId}-entry-${tile.tile_number.toString().padStart(3, '0')}.svg`
   downloadFile(blob, filename)
 }
 
@@ -581,7 +581,7 @@ export async function downloadAllQRsSVG(
     const url = getTileURL(tile.secure_id, baseURL)
     const tileLabel = getTileLabel(batch.batchId, tile.tile_number, batch.totalTiles)
     const svg = await generateQRSVG(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding, moduleShape })
-    const filename = `tile-${tile.tile_number.toString().padStart(3, '0')}.svg`
+    const filename = `entry-${tile.tile_number.toString().padStart(3, '0')}.svg`
     zip.file(filename, svg)
   }
 

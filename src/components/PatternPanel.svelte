@@ -5,6 +5,7 @@
   import { Input } from '$lib/components/ui/input'
   import { Checkbox } from '$lib/components/ui/checkbox'
   import VariablePillInput from './VariablePillInput.svelte'
+  import InfoTooltip from './InfoTooltip.svelte'
   import { _ } from '../lib/i18n'
 
   let {
@@ -40,7 +41,10 @@
     <Card>
       <CardContent class="pt-6 space-y-4">
         <div class="space-y-2">
-          <Label for="single-url">{$_('patternPanel.url')}</Label>
+          <div class="flex items-center justify-between gap-2">
+            <Label for="single-url">{$_('patternPanel.url')}</Label>
+            <InfoTooltip text={$_('tooltips.urlPattern')} />
+          </div>
           <Input
             id="single-url"
             type="text"
@@ -50,8 +54,11 @@
         </div>
 
         <div class="space-y-2 {!labelEnabled ? 'opacity-50' : ''}">
-          <div class="flex items-center justify-between">
-            <Label for="single-label">{$_('patternPanel.label')}</Label>
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <Label for="single-label">{$_('patternPanel.label')}</Label>
+              <InfoTooltip text={$_('tooltips.labelPattern')} />
+            </div>
             <div class="flex items-center gap-2">
               <Checkbox
                 id="pattern-label-enabled"
@@ -63,6 +70,7 @@
               <Label for="pattern-label-enabled" class="text-sm font-normal cursor-pointer">
                 {$_('patternPanel.showLabel')}
               </Label>
+              <InfoTooltip text={$_('tooltips.labelToggle')} />
             </div>
           </div>
           <Input
@@ -78,7 +86,10 @@
   {:else}
     <Card>
       <CardContent class="pt-6 space-y-2">
-        <Label class={!csvData ? 'text-muted-foreground' : ''}>{$_('patternPanel.urlPattern')}</Label>
+        <div class="flex items-center justify-between gap-2">
+          <Label class={!csvData ? 'text-muted-foreground' : ''}>{$_('patternPanel.urlPattern')}</Label>
+          <InfoTooltip text={$_('tooltips.urlPattern')} />
+        </div>
         {#if csvData}
           <VariablePillInput
             bind:pattern={urlPattern}
@@ -96,8 +107,11 @@
 
     <Card>
       <CardContent class="pt-6 space-y-2 {!labelEnabled ? 'opacity-50' : ''}">
-        <div class="flex items-center justify-between">
-          <Label class={!csvData ? 'text-muted-foreground' : ''}>{$_('patternPanel.labelPattern')}</Label>
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <Label class={!csvData ? 'text-muted-foreground' : ''}>{$_('patternPanel.labelPattern')}</Label>
+            <InfoTooltip text={$_('tooltips.labelPattern')} />
+          </div>
           <div class="flex items-center gap-2">
             <Checkbox
               id="batch-pattern-label-enabled"
@@ -110,6 +124,7 @@
             <Label for="batch-pattern-label-enabled" class="text-sm font-normal cursor-pointer {!csvData ? 'text-muted-foreground' : ''}">
               {$_('patternPanel.showLabel')}
             </Label>
+            <InfoTooltip text={$_('tooltips.labelToggle')} />
           </div>
         </div>
         {#if csvData}

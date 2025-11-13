@@ -9,6 +9,7 @@
     "checkJs": true,
     "isolatedModules": true,
     "moduleDetection": "force",
+    "strict": true,
     "baseUrl": ".",
     "paths": {
       "$lib": ["./src/lib"],

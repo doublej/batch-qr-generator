@@ -7,6 +7,7 @@
   import { Button } from '$lib/components/ui/button'
   import { Input } from '$lib/components/ui/input'
   import { _ } from '../lib/i18n'
+  import InfoTooltip from './InfoTooltip.svelte'
 
   let {
     csvData,
@@ -38,8 +39,10 @@
   let abortController: AbortController | null = null
   let logoCache = $state<Map<string, HTMLImageElement>>(new Map())
 
-  // Inverse scaling: smaller QR = larger grid, larger QR = smaller grid
-  // Base is 25px at 500px QR size
+  // Inverse scaling for checkerboard background pattern
+  // Smaller QR (200px) → larger grid (62px), Larger QR (800px) → smaller grid (15px)
+  // Base reference: 25px grid at 500px QR size
+  // Clamped between 10px and 50px for visual consistency
   let checkerSize = $derived(Math.max(10, Math.min(50, (500 / options.qr.size) * 25)))
 
   function nextPreview() {
@@ -336,7 +339,10 @@
               </div>
 
               <div class="space-y-0">
-                <p class="opacity-60">print</p>
+                <p class="opacity-60 flex items-center gap-1.5">
+                  print
+                  <InfoTooltip text={$_('tooltips.previewDpi')} />
+                </p>
                 <div class="flex items-center gap-1.5">
                   <span>{((options.qr.size / dpi) * 25.4).toFixed(1)}mm × {((options.qr.size / dpi) * 25.4).toFixed(1)}mm @</span>
                   <select

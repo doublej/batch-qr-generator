@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "QR-Code-Generator",
-    "description": "QR-Codes für Kachelchargen generieren und herunterladen"
+    "description": "QR-Codes für beliebige Abläufe generieren und herunterladen"
   },
   "tabs": {
     "input": "Eingabe",
@@ -159,6 +159,18 @@
     "failedGenerate": "QR-Codes konnten nicht generiert werden",
     "cancel": "Abbrechen",
     "close": "Schließen"
+  },
+  "tooltips": {
+    "csvUpload": "Laden Sie ein CSV mit genau einer Zeile pro QR-Eintrag hoch, idealerweise mit einer eindeutigen Nummer, dem secure_id-Token und optional einem Status.",
+    "labelToggle": "Aktivieren, wenn jeder QR-Code eine individuell berechnete Beschriftung aus dem unteren Muster anzeigen soll.",
+    "urlPattern": "Kombinieren Sie Klartext und Variablen (z. B. {secure_id}), um festzulegen, wohin jeder QR-Eintrag weiterleitet.",
+    "labelPattern": "Stellen Sie die gedruckte Beschriftung zusammen, indem Sie CSV-Spalten und eingebaute Variablen mischen.",
+    "qrSize": "Steuert die Pixelmaße jedes erzeugten QR-Codes und beeinflusst die angezeigte physische Größe in der Vorschau.",
+    "qrPadding": "Fügt einen Quiet-Zone-Abstand hinzu, damit Scanner den Code zuverlässiger erkennen.",
+    "errorCorrection": "Höhere Stufen verkraften mehr Beschädigung oder Überdruck, machen das Muster jedoch dichter; Mittel passt meistens.",
+    "previewDpi": "Wählen Sie die zum Drucker passende DPI, um die angegebenen Abmessungen realistisch abzuschätzen.",
+    "exportZip": "Erstellt ein ZIP-Archiv, das jeden QR-Eintrag als eigene PNG- oder SVG-Datei enthält.",
+    "exportCsv": "Exportiert Ihr CSV plus die berechnete QR-URL, Beschriftung und die Gesamtzahl der Zeilen."
   },
   "errors": {
     "csvParsing": "Fehler beim Parsen der CSV: {error}"

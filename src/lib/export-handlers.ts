@@ -38,9 +38,9 @@ export async function downloadAllQRs(
 
     if (format === 'png') {
       const blob = await (await fetch(qrData)).blob()
-      zip.file(`tile-${tile.tile_number.toString().padStart(3, '0')}.${extension}`, blob)
+      zip.file(`entry-${tile.tile_number.toString().padStart(3, '0')}.${extension}`, blob)
     } else {
-      zip.file(`tile-${tile.tile_number.toString().padStart(3, '0')}.${extension}`, qrData)
+      zip.file(`entry-${tile.tile_number.toString().padStart(3, '0')}.${extension}`, qrData)
     }
   }
 
@@ -98,7 +98,7 @@ export async function downloadPrintPDF(
 
 export function downloadCSV(batch: TileBatch): void {
   const rows = [
-    ['tile_number', 'secure_id', 'status'],
+    ['entry_number', 'secure_id', 'status'],
     ...batch.tiles.map(tile => [
       tile.tile_number.toString(),
       tile.secure_id,
@@ -108,5 +108,5 @@ export function downloadCSV(batch: TileBatch): void {
 
   const csv = rows.map(row => row.join(',')).join('\n')
   const blob = new Blob([csv], { type: 'text/csv' })
-  downloadFile(blob, `${batch.batchId}-tiles.csv`)
+  downloadFile(blob, `${batch.batchId}-entries.csv`)
 }

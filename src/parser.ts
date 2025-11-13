@@ -63,7 +63,7 @@ export function parseTileBatch(content: string): TileBatch {
 
 export function tileBatchToCSV(batch: TileBatch): string {
   const rows = [
-    ['tile_number', 'secure_id', 'status'],
+    ['entry_number', 'secure_id', 'status'],
     ...batch.tiles.map(tile => [
       tile.tile_number.toString(),
       tile.secure_id,

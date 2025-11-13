@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "Générateur de codes QR",
-    "description": "Générez et téléchargez des codes QR pour les lots de carreaux"
+    "description": "Générez et téléchargez des codes QR pour n'importe quel cas d'usage"
   },
   "tabs": {
     "input": "Entrée",
@@ -159,6 +159,18 @@
     "failedGenerate": "Échec de la génération des codes QR",
     "cancel": "Annuler",
     "close": "Fermer"
+  },
+  "tooltips": {
+    "csvUpload": "Importez un CSV avec une ligne par entrée QR, contenant idéalement un numéro unique, le jeton secure_id et éventuellement un statut.",
+    "labelToggle": "Activez cette option pour imprimer un texte personnalisé sur chaque QR en utilisant le modèle ci-dessous.",
+    "urlPattern": "Combinez du texte brut et des variables (par exemple {secure_id}) pour définir la redirection de chaque entrée QR.",
+    "labelPattern": "Composez la légende imprimée en mélangeant les colonnes du CSV et les variables intégrées.",
+    "qrSize": "Contrôle les dimensions en pixels de chaque QR généré et influence la taille physique indiquée dans l’aperçu.",
+    "qrPadding": "Ajoute une zone de calme autour du code afin que les lecteurs puissent accrocher plus facilement.",
+    "errorCorrection": "Des niveaux plus élevés résistent mieux aux dommages ou aux surimpressions, mais densifient le motif ; Moyen convient dans la plupart des cas.",
+    "previewDpi": "Choisissez la résolution DPI de votre imprimante pour estimer fidèlement les dimensions affichées.",
+    "exportZip": "Crée une archive ZIP contenant chaque entrée QR sous forme de fichier PNG ou SVG individuel.",
+    "exportCsv": "Exporte votre CSV accompagné de l’URL et de l’étiquette générées ainsi que du nombre total de lignes."
   },
   "errors": {
     "csvParsing": "Erreur d'analyse CSV : {error}"

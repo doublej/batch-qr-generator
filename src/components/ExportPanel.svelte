@@ -16,6 +16,7 @@
   import { QRGeneratorManager, type QRGenerationProgress } from '../lib/qr-worker-utils'
   import { onMount, onDestroy } from 'svelte'
   import { _ } from '../lib/i18n'
+  import InfoTooltip from './InfoTooltip.svelte'
 
   let {
     csvData,
@@ -197,7 +198,10 @@
       </div>
     {:else if csvData}
       <div class="space-y-4">
-        <p class="text-sm text-muted-foreground">{$_('exportPanel.exportQRCodes', { values: { count: csvData.rows.length } })}</p>
+        <div class="flex items-start justify-between gap-2 text-sm text-muted-foreground">
+          <p class="flex-1">{$_('exportPanel.exportQRCodes', { values: { count: csvData.rows.length } })}</p>
+          <InfoTooltip text={$_('tooltips.exportZip')} side="left" />
+        </div>
 
         <div class="grid grid-cols-2 gap-2">
           <Button onclick={() => handleExportZIP('png')} disabled={exporting}>
@@ -219,9 +223,12 @@
 
         <Separator />
 
-        <Button variant="secondary" class="w-full" onclick={handleExportCSV}>
-          {$_('exportPanel.exportCSV')}
-        </Button>
+        <div class="flex items-center gap-2">
+          <Button variant="secondary" class="w-full" onclick={handleExportCSV}>
+            {$_('exportPanel.exportCSV')}
+          </Button>
+          <InfoTooltip text={$_('tooltips.exportCsv')} side="left" />
+        </div>
       </div>
     {:else}
       <div class="flex items-center justify-center py-12">

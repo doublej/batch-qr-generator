@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "QR-Code Generator",
-    "description": "Genereer en download QR-codes voor tegelpartijen"
+    "description": "Genereer en download QR-codes voor elke toepassing"
   },
   "tabs": {
     "input": "Invoer",
@@ -159,6 +159,18 @@
     "failedGenerate": "Kan QR-codes niet genereren",
     "cancel": "Annuleren",
     "close": "Sluiten"
+  },
+  "tooltips": {
+    "csvUpload": "Upload een CSV met één rij per QR-item, liefst met een uniek nummer, het secure_id-token en eventueel een status.",
+    "labelToggle": "Schakel dit in om op elke QR-code een aangepaste tekst uit het onderstaande patroon te tonen.",
+    "urlPattern": "Combineer platte tekst met variabelen (bijv. {secure_id}) om te bepalen waar elke QR-entry naartoe verwijst.",
+    "labelPattern": "Stel het onderschrift samen door CSV-kolommen en ingebouwde variabelen te combineren.",
+    "qrSize": "Bepaalt de pixelafmetingen van elke QR en beïnvloedt de fysieke grootte die in de preview wordt getoond.",
+    "qrPadding": "Voegt een rustzone rond de code toe zodat scanners eenvoudiger kunnen focussen.",
+    "errorCorrection": "Hogere niveaus kunnen meer beschadiging of overprint aan, maar maken het patroon dichter; gemiddeld werkt bijna altijd.",
+    "previewDpi": "Kies de DPI van je printer om de weergegeven afmetingen realistisch in te schatten.",
+    "exportZip": "Maakt een ZIP-archief waarin elke QR-entry als apart PNG- of SVG-bestand staat.",
+    "exportCsv": "Exporteert je CSV plus de berekende QR-URL, het label en het totale aantal rijen."
   },
   "errors": {
     "csvParsing": "Fout bij verwerken CSV: {error}"

@@ -7,6 +7,7 @@
   import { Button } from '$lib/components/ui/button'
   import * as Tabs from '$lib/components/ui/tabs'
   import { _ } from '../lib/i18n'
+  import InfoTooltip from './InfoTooltip.svelte'
 
   let {
     csvData = $bindable(),
@@ -106,7 +107,10 @@
 
       <Tabs.Content value="batch" class="mt-4 space-y-4">
         <div class="space-y-2">
-          <Label for="csv-upload">{$_('inputPanel.csvUpload')}</Label>
+          <div class="flex items-center justify-between gap-2">
+            <Label for="csv-upload">{$_('inputPanel.csvUpload')}</Label>
+            <InfoTooltip text={$_('tooltips.csvUpload')} />
+          </div>
           <input
             id="csv-upload"
             type="file"
