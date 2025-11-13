@@ -300,7 +300,7 @@
               {/if}
             </div>
 
-            <div class="qr-preview-container relative border overflow-hidden p-8" style="border-radius: var(--radius-inner); background-image: repeating-conic-gradient(#9ca3af 0% 25%, #6b7280 0% 50%); background-size: {checkerSize}px {checkerSize}px; background-position: 0 0;">
+            <div class="qr-preview-container relative overflow-hidden p-8" style="border-radius: 8px; border: 4px solid transparent; background: repeating-conic-gradient(#9ca3af 0% 25%, #6b7280 0% 50%) padding-box, linear-gradient(to bottom, hsl(var(--border)), hsl(var(--border) / 0.5)) border-box; background-size: {checkerSize}px {checkerSize}px, auto; background-position: 32px 32px, 0 0; box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.25);">
               {#if previewQR}
                 <img src={previewQR} alt="Preview QR Code" class="w-full relative z-10" style="border-radius: var(--radius-nested); max-width: 100%; height: auto;" />
               {:else}
@@ -313,34 +313,35 @@
               {/if}
             </div>
 
-            <div class="space-y-2 text-xs">
+            <div class="space-y-1.5 text-[11px] leading-tight text-muted-foreground/70">
               {#if currentURL}
-                <div class="break-all">
-                  {currentURL}
+                <div class="space-y-0">
+                  <p class="opacity-60">url</p>
+                  <p class="break-all">{currentURL}</p>
                 </div>
               {/if}
 
               {#if mode === 'batch' && csvData}
-                <div class="mt-2 p-2 border rounded text-xs bg-muted/30">
-                  <div class="font-semibold mb-1 text-muted-foreground">Row Data:</div>
-                  <div class="space-y-0.5 max-h-32 overflow-y-auto">
-                    {#each Object.entries(csvData.rows[previewIndex]) as [key, value]}
-                      <div class="flex gap-2">
-                        <span class="font-mono text-muted-foreground min-w-[80px]">{key}:</span>
-                        <span class="font-mono break-all">{value}</span>
-                      </div>
-                    {/each}
+                {#each Object.entries(csvData.rows[previewIndex]) as [key, value]}
+                  <div class="space-y-0">
+                    <p class="opacity-60">{key}</p>
+                    <p class="break-all">{value}</p>
                   </div>
-                </div>
+                {/each}
               {/if}
 
-              <div class="text-muted-foreground space-y-1">
-                <div>{options.qr.size}px × {options.qr.size}px ({checkerSize.toFixed(0)}px grid)</div>
-                <div class="flex items-center gap-2">
-                  <span>Print: {((options.qr.size / dpi) * 25.4).toFixed(1)}mm × {((options.qr.size / dpi) * 25.4).toFixed(1)}mm @</span>
+              <div class="space-y-0">
+                <p class="opacity-60">dimensions</p>
+                <p>{options.qr.size}px × {options.qr.size}px ({checkerSize.toFixed(0)}px grid)</p>
+              </div>
+
+              <div class="space-y-0">
+                <p class="opacity-60">print</p>
+                <div class="flex items-center gap-1.5">
+                  <span>{((options.qr.size / dpi) * 25.4).toFixed(1)}mm × {((options.qr.size / dpi) * 25.4).toFixed(1)}mm @</span>
                   <select
                     bind:value={dpi}
-                    class="h-6 rounded border border-input bg-background px-2 text-xs"
+                    class="h-4 rounded border border-input bg-background px-1 text-[11px]"
                   >
                     <option value={72}>72 DPI</option>
                     <option value={150}>150 DPI</option>

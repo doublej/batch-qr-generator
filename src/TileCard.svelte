@@ -28,7 +28,7 @@
     const a = document.createElement('a')
     a.href = url
     const label = getTileLabel(config.batchId, tile.tile_number, config.totalTiles)
-    a.download = `${config.batchId}-tile-${tile.tile_number.toString().padStart(3, '0')}.png`
+    a.download = `${config.batchId}-entry-${tile.tile_number.toString().padStart(3, '0')}.png`
     a.click()
     URL.revokeObjectURL(url)
     downloading = false
@@ -61,13 +61,26 @@
       {/if}
     </div>
 
-    <div class="w-full space-y-2">
-      <p class="text-xs text-muted-foreground font-mono text-center break-all">
-        {tile.secure_id}
-      </p>
-      <p class="text-xs text-primary font-mono text-center break-all">
-        {getTileURL(tile.secure_id, config.baseURL)}
-      </p>
+    <div class="w-full space-y-3 bg-muted/50 rounded-lg p-3">
+      <div class="space-y-1">
+        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Entry Number</p>
+        <p class="text-sm font-mono">{tile.tile_number}</p>
+      </div>
+
+      <div class="space-y-1">
+        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Secure ID</p>
+        <p class="text-sm font-mono break-all">{tile.secure_id}</p>
+      </div>
+
+      <div class="space-y-1">
+        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">URL</p>
+        <p class="text-sm font-mono break-all text-primary">{getTileURL(tile.secure_id, config.baseURL)}</p>
+      </div>
+
+      <div class="space-y-1">
+        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</p>
+        <p class="text-sm font-mono capitalize">{tile.status}</p>
+      </div>
     </div>
 
     <Button
