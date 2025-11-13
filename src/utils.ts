@@ -1,4 +1,4 @@
-import QRCode from 'qrcodejs'
+import QRCode from 'qrcode'
 import JSZip from 'jszip'
 import jsPDF from 'jspdf'
 import type { TileBatch, TileMapping, CSVData } from './types'
@@ -96,8 +96,7 @@ interface QROptions {
 }
 
 
-async function svgToCanvas(svgElement: HTMLElement): Promise<HTMLCanvasElement> {
-  const svgString = new XMLSerializer().serializeToString(svgElement)
+async function svgToCanvas(svgString: string): Promise<HTMLCanvasElement> {
   const canvas = document.createElement('canvas')
   const img = new Image()
 
@@ -119,18 +118,18 @@ export async function generateQRDataURL(text: string, options?: QROptions): Prom
   const padding = options?.qrPadding ?? { top: 16, right: 16, bottom: 16, left: 16 }
   const eclMap = { L: 'L', M: 'M', Q: 'Q', H: 'H' } as const
 
-  const container = document.createElement('div')
-  new QRCode(container, {
-    text,
+  const svgString = await QRCode.toString(text, {
+    type: 'svg',
     width: qrSize,
-    height: qrSize,
-    colorDark: options?.dataModuleColor || '#000000',
-    colorLight: options?.backgroundColor || '#FFFFFF',
-    correctLevel: QRCode.CorrectLevel[eclMap[options?.errorCorrectionLevel || 'M']]
+    color: {
+      dark: options?.dataModuleColor || '#000000',
+      light: options?.backgroundColor || '#FFFFFF'
+    },
+    errorCorrectionLevel: eclMap[options?.errorCorrectionLevel || 'M'],
+    margin: 0
   })
 
-  const svgElement = container.querySelector('svg') as HTMLElement
-  const canvas = await svgToCanvas(svgElement)
+  const canvas = await svgToCanvas(svgString)
   const ctx = canvas.getContext('2d')!
 
   if (options?.logoDataURL) {
@@ -391,18 +390,16 @@ export async function generateQRSVG(text: string, options?: QROptions): Promise<
   const padding = options?.qrPadding ?? { top: 16, right: 16, bottom: 16, left: 16 }
   const eclMap = { L: 'L', M: 'M', Q: 'Q', H: 'H' } as const
 
-  const container = document.createElement('div')
-  new QRCode(container, {
-    text,
+  let svgString = await QRCode.toString(text, {
+    type: 'svg',
     width: qrSize,
-    height: qrSize,
-    colorDark: options?.dataModuleColor || '#000000',
-    colorLight: options?.backgroundColor || '#FFFFFF',
-    correctLevel: QRCode.CorrectLevel[eclMap[options?.errorCorrectionLevel || 'M']]
+    color: {
+      dark: options?.dataModuleColor || '#000000',
+      light: options?.backgroundColor || '#FFFFFF'
+    },
+    errorCorrectionLevel: eclMap[options?.errorCorrectionLevel || 'M'],
+    margin: 0
   })
-
-  const svgElement = container.querySelector('svg') as HTMLElement
-  let svgString = new XMLSerializer().serializeToString(svgElement)
   const logoPlacement = options?.logoPlacement || 'center'
   const shouldCenterLogo = logoPlacement === 'center'
 

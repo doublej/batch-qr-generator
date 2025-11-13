@@ -1,4 +1,4 @@
-import QRCode from 'qrcodejs'
+import QRCode from 'qrcode'
 import type { QRDesignOptions, QRPadding } from './config'
 import { calculateLogoPosition } from './logo-utils'
 import { getEstimatedModuleCount, getPixelsPerModule } from './qr-dimensions'
@@ -10,21 +10,20 @@ interface GenerateQRParams {
   tileLabel?: string
 }
 
-function createBasicQRSVG(text: string, options: QRDesignOptions): HTMLElement {
+async function createBasicQRSVG(text: string, options: QRDesignOptions): Promise<string> {
   const { qr, colors } = options
   const eclMap = { L: 'L', M: 'M', Q: 'Q', H: 'H' } as const
 
-  const container = document.createElement('div')
-  new QRCode(container, {
-    text,
+  return await QRCode.toString(text, {
+    type: 'svg',
     width: qr.size,
-    height: qr.size,
-    colorDark: colors.dataModuleColor,
-    colorLight: colors.background,
-    correctLevel: QRCode.CorrectLevel[eclMap[qr.errorCorrection]]
+    color: {
+      dark: colors.dataModuleColor,
+      light: colors.background
+    },
+    errorCorrectionLevel: eclMap[qr.errorCorrection],
+    margin: 0
   })
-
-  return container.querySelector('svg') as HTMLElement
 }
 
 async function addNonCenterLogo(
@@ -153,8 +152,7 @@ function addTextLabel(
   return finalCanvas
 }
 
-async function svgToCanvas(svgElement: HTMLElement): Promise<HTMLCanvasElement> {
-  const svgString = new XMLSerializer().serializeToString(svgElement)
+async function svgToCanvas(svgString: string): Promise<HTMLCanvasElement> {
   const canvas = document.createElement('canvas')
   const img = new Image()
 
@@ -172,8 +170,8 @@ async function svgToCanvas(svgElement: HTMLElement): Promise<HTMLCanvasElement> 
 }
 
 async function generatePNG(text: string, options: QRDesignOptions, tileLabel?: string): Promise<string> {
-  const svgElement = createBasicQRSVG(text, options)
-  const canvas = await svgToCanvas(svgElement)
+  const svgString = await createBasicQRSVG(text, options)
+  const canvas = await svgToCanvas(svgString)
 
   if (options.logo.enabled && options.logo.dataURL && options.logo.placement !== 'center') {
     await addNonCenterLogo(
@@ -231,8 +229,7 @@ function applySVGPadding(svgString: string, padding: QRPadding, backgroundColor:
 }
 
 async function generateSVG(text: string, options: QRDesignOptions, tileLabel?: string): Promise<string> {
-  const svgElement = createBasicQRSVG(text, options)
-  let svgString = new XMLSerializer().serializeToString(svgElement)
+  let svgString = await createBasicQRSVG(text, options)
 
   if (options.logo.enabled && options.logo.dataURL && options.logo.placement !== 'center') {
     const { x, y } = calculateLogoPosition(
