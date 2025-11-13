@@ -11,7 +11,6 @@
   },
   "designTabs": {
     "basics": "Grundlagen",
-    "module": "Form",
     "colors": "Farben",
     "logo": "Logo",
     "text": "Text"
@@ -44,8 +43,6 @@
     "exportQRCodes": "{count} QR-Codes exportieren",
     "pngZip": "PNG (ZIP)",
     "svgZip": "SVG (ZIP)",
-    "pdfA4": "PDF (A4)",
-    "pdfA3": "PDF (A3)",
     "exportCSV": "CSV-Daten exportieren",
     "uploadCSVMessage": "Laden Sie eine CSV-Datei im Eingabe-Tab hoch, um Stapel-QR-Codes zu exportieren"
   },
@@ -74,11 +71,6 @@
     "errorMedium": "Mittel (15%)",
     "errorQuartile": "Quartil (25%)",
     "errorHigh": "Hoch (30%)"
-  },
-  "shapeSettings": {
-    "moduleShape": "Modulform",
-    "square": "Quadrat",
-    "dots": "Punkte"
   },
   "colorSettings": {
     "backgroundColor": "Hintergrundfarbe",

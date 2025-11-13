@@ -11,7 +11,6 @@
   },
   "designTabs": {
     "basics": "Basique",
-    "module": "Forme",
     "colors": "Couleurs",
     "logo": "Logo",
     "text": "Texte"
@@ -44,8 +43,6 @@
     "exportQRCodes": "Exporter {count} codes QR",
     "pngZip": "PNG (ZIP)",
     "svgZip": "SVG (ZIP)",
-    "pdfA4": "PDF (A4)",
-    "pdfA3": "PDF (A3)",
     "exportCSV": "Exporter les données CSV",
     "uploadCSVMessage": "Téléchargez un fichier CSV dans l'onglet Entrée pour exporter des codes QR en lot"
   },
@@ -74,11 +71,6 @@
     "errorMedium": "Moyen (15%)",
     "errorQuartile": "Quartile (25%)",
     "errorHigh": "Élevé (30%)"
-  },
-  "shapeSettings": {
-    "moduleShape": "Forme du module",
-    "square": "Carré",
-    "dots": "Points"
   },
   "colorSettings": {
     "backgroundColor": "Couleur d'arrière-plan",

@@ -10,7 +10,6 @@ export interface QRConfig {
   padding: QRPadding
   errorCorrection: 'L' | 'M' | 'Q' | 'H'
   dpi: number
-  moduleShape: 'square' | 'dots'
 }
 
 export interface LogoConfig {
@@ -71,8 +70,7 @@ export const defaultQRDesign: QRDesignOptions = {
       left: 16
     },
     errorCorrection: 'M',
-    dpi: 300,
-    moduleShape: 'square'
+    dpi: 300
   },
   logo: {
     enabled: true,

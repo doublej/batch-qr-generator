@@ -5,7 +5,6 @@
   import {
     downloadAllQRsFromCSV,
     downloadAllQRsSVGFromCSV,
-    downloadPrintPDFFromCSV,
     downloadCSVData
   } from '../utils'
   import { replaceVariables } from '../lib/csv-parser'
@@ -90,7 +89,6 @@
         textRotation: options.text.rotation,
         qrSize: options.qr.size,
         qrPadding: options.qr.padding,
-        moduleShape: options.qr.moduleShape,
         backgroundColor: options.colors.background,
         eyeColor: options.colors.eyeColor,
         dataModuleColor: options.colors.dataModuleColor,
@@ -148,33 +146,6 @@
     exporting = false
   }
 
-  async function handleExportPDF(pageSize: 'A4' | 'A3') {
-    if (!csvData) return
-    exporting = true
-
-    try {
-      await downloadPrintPDFFromCSV(
-        csvData,
-        urlPattern,
-        labelPattern,
-        options.qr.errorCorrection,
-        options.logo.enabled ? options.logo.dataURL : '',
-        options.logo.size,
-        options.logo.placement,
-        options.text.size,
-        0, // text margin (not used)
-        options.text.position,
-        options.text.enabled,
-        options.qr.size,
-        options.qr.padding,
-        pageSize,
-        options.qr.moduleShape
-      )
-    } finally {
-      exporting = false
-    }
-  }
-
   function handleExportCSV() {
     if (!csvData) return
     downloadCSVData(csvData, urlPattern, labelPattern, 'data.csv')
@@ -209,15 +180,6 @@
           </Button>
           <Button onclick={() => handleExportZIP('svg')} disabled={exporting}>
             {exporting ? $_('exportPanel.exporting') : $_('exportPanel.svgZip')}
-          </Button>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          <Button variant="outline" onclick={() => handleExportPDF('A4')} disabled={exporting}>
-            {$_('exportPanel.pdfA4')}
-          </Button>
-          <Button variant="outline" onclick={() => handleExportPDF('A3')} disabled={exporting}>
-            {$_('exportPanel.pdfA3')}
           </Button>
         </div>
 

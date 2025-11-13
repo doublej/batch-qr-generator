@@ -98,7 +98,6 @@
           textRotation: options.text.rotation,
           qrSize: options.qr.size,
           qrPadding: options.qr.padding,
-          moduleShape: options.qr.moduleShape,
           backgroundColor: options.colors.background,
           eyeColor: options.colors.eyeColor,
           dataModuleColor: options.colors.dataModuleColor,
@@ -160,7 +159,6 @@
           textRotation: options.text.rotation,
           qrSize: options.qr.size,
           qrPadding: options.qr.padding,
-          moduleShape: options.qr.moduleShape,
           backgroundColor: options.colors.background,
           eyeColor: options.colors.eyeColor,
           dataModuleColor: options.colors.dataModuleColor,
@@ -242,7 +240,6 @@
     options.qr.padding?.left
     options.qr.size
     options.qr.errorCorrection
-    options.qr.moduleShape
     options.logo.enabled
     options.logo.dataURL
     options.logo.size

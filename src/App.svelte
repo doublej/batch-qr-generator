@@ -5,7 +5,6 @@
   import PreviewPanel from './components/PreviewPanel.svelte'
   import ExportPanel from './components/ExportPanel.svelte'
   import BasicSettings from './components/design/BasicSettings.svelte'
-  import ShapeSettings from './components/design/ShapeSettings.svelte'
   import ColorSettings from './components/design/ColorSettings.svelte'
   import LogoSettings from './components/design/LogoSettings.svelte'
   import TextSettings from './components/design/TextSettings.svelte'
@@ -20,7 +19,9 @@
   } from './lib/sessionStorage'
   import SessionSelector from './components/SessionSelector.svelte'
   import LanguageSwitcher from './components/LanguageSwitcher.svelte'
+  import ThemeSwitcher from './components/ThemeSwitcher.svelte'
   import { _ } from './lib/i18n'
+  import { loadTheme } from './lib/themes'
 
   let initialized = $state(false)
   let showQRCodes = $state(false)
@@ -117,6 +118,7 @@
 
   $effect(() => {
     if (!initialized) {
+      loadTheme()
       currentSessionId = initializeFirstSession()
       loadState()
       initialized = true
@@ -132,7 +134,6 @@
     design.qr.padding?.left
     design.qr.errorCorrection
     design.qr.dpi
-    design.qr.moduleShape
     design.logo.enabled
     design.logo.dataURL
     design.logo.size
@@ -187,6 +188,7 @@
         <p class="text-muted-foreground">{$_('app.description')}</p>
       </div>
       <div class="flex items-start gap-2">
+        <ThemeSwitcher />
         <LanguageSwitcher />
       </div>
     </div>
@@ -223,9 +225,8 @@
 
           <Tabs.Content value="design" class="space-y-4">
             <Tabs.Root bind:value={designStep}>
-              <Tabs.List class="grid w-full grid-cols-5">
+              <Tabs.List class="grid w-full grid-cols-4">
                 <Tabs.Trigger value="basics">{$_('designTabs.basics')}</Tabs.Trigger>
-                <Tabs.Trigger value="module">{$_('designTabs.module')}</Tabs.Trigger>
                 <Tabs.Trigger value="colors">{$_('designTabs.colors')}</Tabs.Trigger>
                 <Tabs.Trigger value="logo">{$_('designTabs.logo')}</Tabs.Trigger>
                 <Tabs.Trigger value="text">{$_('designTabs.text')}</Tabs.Trigger>
@@ -235,14 +236,6 @@
                 <Card>
                   <CardContent class="pt-6">
                     <BasicSettings bind:config={design.qr} />
-                  </CardContent>
-                </Card>
-              </Tabs.Content>
-
-              <Tabs.Content value="module" class="mt-4">
-                <Card>
-                  <CardContent class="pt-6">
-                    <ShapeSettings bind:config={design.qr} />
                   </CardContent>
                 </Card>
               </Tabs.Content>

@@ -1,6 +1,5 @@
 import QRCode from 'qrcode'
 import JSZip from 'jszip'
-import jsPDF from 'jspdf'
 import type { TileBatch, TileMapping, CSVData } from './types'
 import { replaceVariables } from './lib/csv-parser'
 
@@ -86,7 +85,6 @@ interface QROptions {
   textRotation?: number
   qrSize?: number
   qrPadding?: QRPadding
-  moduleShape?: 'square' | 'dots'
   eyeShape?: 'square' | 'dots'
   backgroundColor?: string
   eyeColor?: string
@@ -322,12 +320,11 @@ export async function downloadQR(
   textPosition: 'top' | 'bottom' = 'bottom',
   showTileLabel: boolean = true,
   qrSize: number = 300,
-  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 },
-  moduleShape: 'square' | 'dots' = 'square'
+  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 }
 ): Promise<void> {
   const url = getTileURL(tile.secure_id, baseURL)
   const tileLabel = getTileLabel(batchId, tile.tile_number, totalTiles)
-  const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding, moduleShape })
+  const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding })
   const blob = await (await fetch(dataUrl)).blob()
   const filename = `${batchId}-entry-${tile.tile_number.toString().padStart(3, '0')}.png`
   downloadFile(blob, filename)
@@ -344,15 +341,14 @@ export async function downloadAllQRs(
   textPosition: 'top' | 'bottom' = 'bottom',
   showTileLabel: boolean = true,
   qrSize: number = 300,
-  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 },
-  moduleShape: 'square' | 'dots' = 'square'
+  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 }
 ): Promise<void> {
   const zip = new JSZip()
 
   for (const tile of batch.tiles) {
     const url = getTileURL(tile.secure_id, baseURL)
     const tileLabel = getTileLabel(batch.batchId, tile.tile_number, batch.totalTiles)
-    const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding, moduleShape })
+    const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding })
     const blob = await (await fetch(dataUrl)).blob()
     const filename = `entry-${tile.tile_number.toString().padStart(3, '0')}.png`
     zip.file(filename, blob)
@@ -360,63 +356,6 @@ export async function downloadAllQRs(
 
   const zipBlob = await zip.generateAsync({ type: 'blob' })
   downloadFile(zipBlob, `${batch.batchId}-qrcodes.zip`)
-}
-
-export async function downloadPrintPDF(
-  batch: TileBatch,
-  baseURL: string,
-  errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H' = 'M',
-  logoDataURL: string = '',
-  logoSize: number = 60,
-  logoPlacement: 'center' | 'top-left' | 'top-right' | 'bottom-left' = 'center',
-  textSize: number = 16,
-  textPosition: 'top' | 'bottom' = 'bottom',
-  showTileLabel: boolean = true,
-  qrSize: number = 300,
-  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 },
-  pageSize: 'A4' | 'A3' = 'A4',
-  moduleShape: 'square' | 'dots' = 'square'
-): Promise<void> {
-  const pdf = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: pageSize.toLowerCase() as 'a4' | 'a3'
-  })
-
-  const pageWidth = pdf.internal.pageSize.getWidth()
-  const pageHeight = pdf.internal.pageSize.getHeight()
-  const margin = 10
-  const qrSizeMM = 50
-  const gap = 5
-  const cols = Math.floor((pageWidth - 2 * margin + gap) / (qrSizeMM + gap))
-  const rows = Math.floor((pageHeight - 2 * margin + gap) / (qrSizeMM + gap))
-  const qrsPerPage = cols * rows
-
-  let currentPage = 0
-  let qrCount = 0
-
-  for (const tile of batch.tiles) {
-    if (qrCount % qrsPerPage === 0 && qrCount > 0) {
-      pdf.addPage()
-      currentPage++
-    }
-
-    const url = getTileURL(tile.secure_id, baseURL)
-    const tileLabel = getTileLabel(batch.batchId, tile.tile_number, batch.totalTiles)
-    const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding, moduleShape })
-
-    const posInPage = qrCount % qrsPerPage
-    const col = posInPage % cols
-    const row = Math.floor(posInPage / cols)
-
-    const x = margin + col * (qrSizeMM + gap)
-    const y = margin + row * (qrSizeMM + gap)
-
-    pdf.addImage(dataUrl, 'PNG', x, y, qrSizeMM, qrSizeMM)
-    qrCount++
-  }
-
-  pdf.save(`${batch.batchId}-print-${pageSize}.pdf`)
 }
 
 export function downloadCSV(batch: TileBatch): void {
@@ -572,15 +511,14 @@ export async function downloadAllQRsSVG(
   textPosition: 'top' | 'bottom' = 'bottom',
   showTileLabel: boolean = true,
   qrSize: number = 300,
-  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 },
-  moduleShape: 'square' | 'dots' = 'square'
+  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 }
 ): Promise<void> {
   const zip = new JSZip()
 
   for (const tile of batch.tiles) {
     const url = getTileURL(tile.secure_id, baseURL)
     const tileLabel = getTileLabel(batch.batchId, tile.tile_number, batch.totalTiles)
-    const svg = await generateQRSVG(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding, moduleShape })
+    const svg = await generateQRSVG(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding })
     const filename = `entry-${tile.tile_number.toString().padStart(3, '0')}.svg`
     zip.file(filename, svg)
   }
@@ -601,8 +539,7 @@ export async function downloadAllQRsFromCSV(
   textPosition: 'top' | 'bottom' = 'bottom',
   showTileLabel: boolean = true,
   qrSize: number = 300,
-  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 },
-  moduleShape: 'square' | 'dots' = 'square'
+  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 }
 ): Promise<void> {
   const zip = new JSZip()
 
@@ -610,7 +547,7 @@ export async function downloadAllQRsFromCSV(
     const row = csvData.rows[i]
     const url = replaceVariables(urlPattern, row, i, csvData.rows.length)
     const tileLabel = replaceVariables(labelPattern, row, i, csvData.rows.length)
-    const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding, moduleShape })
+    const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding })
     const blob = await (await fetch(dataUrl)).blob()
     const filename = `qr-${(i + 1).toString().padStart(3, '0')}.png`
     zip.file(filename, blob)
@@ -632,8 +569,7 @@ export async function downloadAllQRsSVGFromCSV(
   textPosition: 'top' | 'bottom' = 'bottom',
   showTileLabel: boolean = true,
   qrSize: number = 300,
-  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 },
-  moduleShape: 'square' | 'dots' = 'square'
+  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 }
 ): Promise<void> {
   const zip = new JSZip()
 
@@ -641,72 +577,13 @@ export async function downloadAllQRsSVGFromCSV(
     const row = csvData.rows[i]
     const url = replaceVariables(urlPattern, row, i, csvData.rows.length)
     const tileLabel = replaceVariables(labelPattern, row, i, csvData.rows.length)
-    const svg = await generateQRSVG(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding, moduleShape })
+    const svg = await generateQRSVG(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding })
     const filename = `qr-${(i + 1).toString().padStart(3, '0')}.svg`
     zip.file(filename, svg)
   }
 
   const zipBlob = await zip.generateAsync({ type: 'blob' })
   downloadFile(zipBlob, `qrcodes-svg.zip`)
-}
-
-export async function downloadPrintPDFFromCSV(
-  csvData: CSVData,
-  urlPattern: string,
-  labelPattern: string,
-  errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H' = 'M',
-  logoDataURL: string = '',
-  logoSize: number = 60,
-  logoPlacement: 'center' | 'top-left' | 'top-right' | 'bottom-left' = 'center',
-  textSize: number = 16,
-  textPosition: 'top' | 'bottom' = 'bottom',
-  showTileLabel: boolean = true,
-  qrSize: number = 300,
-  qrPadding: QRPadding = { top: 16, right: 16, bottom: 16, left: 16 },
-  pageSize: 'A4' | 'A3' = 'A4',
-  moduleShape: 'square' | 'dots' = 'square'
-): Promise<void> {
-  const pdf = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: (pageSize.toLowerCase() as any)
-  })
-
-  const pageWidth = pdf.internal.pageSize.getWidth()
-  const pageHeight = pdf.internal.pageSize.getHeight()
-  const margin = 10
-  const qrSizeMM = 50
-  const gap = 5
-  const cols = Math.floor((pageWidth - 2 * margin + gap) / (qrSizeMM + gap))
-  const rows = Math.floor((pageHeight - 2 * margin + gap) / (qrSizeMM + gap))
-  const qrsPerPage = cols * rows
-
-  let currentPage = 0
-  let qrCount = 0
-
-  for (let i = 0; i < csvData.rows.length; i++) {
-    const row = csvData.rows[i]
-    if (qrCount % qrsPerPage === 0 && qrCount > 0) {
-      pdf.addPage()
-      currentPage++
-    }
-
-    const url = replaceVariables(urlPattern, row, i, csvData.rows.length)
-    const tileLabel = replaceVariables(labelPattern, row, i, csvData.rows.length)
-    const dataUrl = await generateQRDataURL(url, { tileLabel, errorCorrectionLevel, logoDataURL, logoSize, logoPlacement, textSize, textPosition, showTileLabel, qrSize, qrPadding, moduleShape })
-
-    const posInPage = qrCount % qrsPerPage
-    const col = posInPage % cols
-    const rowIdx = Math.floor(posInPage / cols)
-
-    const x = margin + col * (qrSizeMM + gap)
-    const y = margin + rowIdx * (qrSizeMM + gap)
-
-    pdf.addImage(dataUrl, 'PNG', x, y, qrSizeMM, qrSizeMM)
-    qrCount++
-  }
-
-  pdf.save(`qrcodes-print-${pageSize}.pdf`)
 }
 
 export function downloadCSVData(

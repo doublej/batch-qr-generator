@@ -11,7 +11,6 @@
   },
   "designTabs": {
     "basics": "Basis",
-    "module": "Vorm",
     "colors": "Kleuren",
     "logo": "Logo",
     "text": "Tekst"
@@ -44,8 +43,6 @@
     "exportQRCodes": "{count} QR-codes exporteren",
     "pngZip": "PNG (ZIP)",
     "svgZip": "SVG (ZIP)",
-    "pdfA4": "PDF (A4)",
-    "pdfA3": "PDF (A3)",
     "exportCSV": "CSV-gegevens exporteren",
     "uploadCSVMessage": "Upload een CSV-bestand in het Invoer-tabblad om batch QR-codes te exporteren"
   },
@@ -74,11 +71,6 @@
     "errorMedium": "Gemiddeld (15%)",
     "errorQuartile": "Kwartiel (25%)",
     "errorHigh": "Hoog (30%)"
-  },
-  "shapeSettings": {
-    "moduleShape": "Modulevorm",
-    "square": "Vierkant",
-    "dots": "Stippen"
   },
   "colorSettings": {
     "backgroundColor": "Achtergrondkleur",
