@@ -113,6 +113,8 @@
     showQRCodes = true
   }
 
+  let saveTimeout: ReturnType<typeof setTimeout> | null = null
+
   $effect(() => {
     if (!initialized) {
       currentSessionId = initializeFirstSession()
@@ -163,7 +165,8 @@
     mode
     labelEnabled
 
-    saveState()
+    if (saveTimeout) clearTimeout(saveTimeout)
+    saveTimeout = setTimeout(saveState, 300)
   })
 </script>
 

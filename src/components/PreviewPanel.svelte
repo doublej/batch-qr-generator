@@ -34,6 +34,9 @@
   let dpi = $state(300)
   let currentURL = $state<string>('')
   let rowInputValue = $state<string>('1')
+  let updateTimeout: ReturnType<typeof setTimeout> | null = null
+  let abortController: AbortController | null = null
+  let logoCache = $state<Map<string, HTMLImageElement>>(new Map())
 
   // Inverse scaling: smaller QR = larger grid, larger QR = smaller grid
   // Base is 25px at 500px QR size
@@ -54,6 +57,10 @@
   }
 
   async function updatePreview() {
+    if (abortController) abortController.abort()
+    abortController = new AbortController()
+    const signal = abortController.signal
+
     if (mode === 'single') {
       if (!urlPattern) {
         previewQR = ''
@@ -61,11 +68,12 @@
         return
       }
 
-      // Show loading state when generating a new QR
       previewLoading = true
       currentURL = urlPattern
 
       try {
+        if (signal.aborted) return
+
         const dataUrl = await generateQRDataURL(urlPattern, {
           tileLabel: labelEnabled ? labelPattern : '',
           errorCorrectionLevel: options.qr.errorCorrection,
@@ -98,12 +106,18 @@
           gradientAngle: options.gradient.angle
         })
 
-        previewQR = dataUrl
+        if (!signal.aborted) {
+          previewQR = dataUrl
+        }
       } catch (error) {
-        console.error('Preview generation failed:', error)
-        previewQR = ''
+        if (!signal.aborted) {
+          console.error('Preview generation failed:', error)
+          previewQR = ''
+        }
       } finally {
-        previewLoading = false
+        if (!signal.aborted) {
+          previewLoading = false
+        }
       }
     } else {
       if (!csvData || csvData.rows.length === 0) {
@@ -112,10 +126,11 @@
         return
       }
 
-      // Show loading state when generating a new QR
       previewLoading = true
 
       try {
+        if (signal.aborted) return
+
         const row = csvData.rows[previewIndex]
         const url = replaceVariables(urlPattern, row, previewIndex, csvData.rows.length)
         const label = replaceVariables(labelPattern, row, previewIndex, csvData.rows.length)
@@ -153,14 +168,25 @@
           gradientAngle: options.gradient.angle
         })
 
-        previewQR = dataUrl
+        if (!signal.aborted) {
+          previewQR = dataUrl
+        }
       } catch (error) {
-        console.error('Preview generation failed:', error)
-        previewQR = ''
+        if (!signal.aborted) {
+          console.error('Preview generation failed:', error)
+          previewQR = ''
+        }
       } finally {
-        previewLoading = false
+        if (!signal.aborted) {
+          previewLoading = false
+        }
       }
     }
+  }
+
+  function debouncedUpdatePreview() {
+    if (updateTimeout) clearTimeout(updateTimeout)
+    updateTimeout = setTimeout(updatePreview, 100)
   }
 
   function downloadPreview() {
@@ -243,16 +269,15 @@
     urlPattern
 
     if (mode === 'single' && urlPattern) {
-      updatePreview()
+      debouncedUpdatePreview()
     } else if (mode === 'batch' && csvData && urlPattern) {
-      updatePreview()
+      debouncedUpdatePreview()
     } else {
       previewQR = ''
     }
   })
 
   $effect(() => {
-    // Separate effect for preview index changes only
     previewIndex
     csvData?.rows.length
 
@@ -292,6 +317,20 @@
               {#if currentURL}
                 <div class="break-all">
                   {currentURL}
+                </div>
+              {/if}
+
+              {#if mode === 'batch' && csvData}
+                <div class="mt-2 p-2 border rounded text-xs bg-muted/30">
+                  <div class="font-semibold mb-1 text-muted-foreground">Row Data:</div>
+                  <div class="space-y-0.5 max-h-32 overflow-y-auto">
+                    {#each Object.entries(csvData.rows[previewIndex]) as [key, value]}
+                      <div class="flex gap-2">
+                        <span class="font-mono text-muted-foreground min-w-[80px]">{key}:</span>
+                        <span class="font-mono break-all">{value}</span>
+                      </div>
+                    {/each}
+                  </div>
                 </div>
               {/if}
 

@@ -22,6 +22,7 @@
   let fileName = $state('')
   let firstRowIsHeader = $state(true)
   let customHeaders = $state<string[]>([])
+  let headerMap = $state<Map<string, string>>(new Map())
 
   async function handleCSVUpload(event: Event) {
     const target = event.target as HTMLInputElement
@@ -68,14 +69,16 @@
     customHeaders[index] = newHeader
     csvData.headers[index] = newHeader
 
-    csvData.rows = csvData.rows.map(row => {
-      const newRow = { ...row }
-      if (oldHeader !== newHeader) {
-        newRow[newHeader] = newRow[oldHeader]
-        delete newRow[oldHeader]
-      }
-      return newRow
-    })
+    if (oldHeader !== newHeader) {
+      headerMap.set(oldHeader, newHeader)
+      csvData.rows = csvData.rows.map(row => {
+        const mapped: Record<string, string> = {}
+        for (const key in row) {
+          mapped[headerMap.get(key) || key] = row[key]
+        }
+        return mapped
+      })
+    }
   }
 
   function handleModeChange(newMode: string) {

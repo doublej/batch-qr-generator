@@ -51,7 +51,6 @@ export class QRGeneratorManager {
         message: `Generating ${items.length} QR codes...`
       })
 
-      // Process in batches
       for (let i = 0; i < items.length; i += batchSize) {
         if (this.abortController.signal.aborted) {
           throw new Error('Generation cancelled')
@@ -59,7 +58,6 @@ export class QRGeneratorManager {
 
         const batch = items.slice(i, Math.min(i + batchSize, items.length))
 
-        // Generate QR codes for this batch
         const batchResults = await Promise.all(
           batch.map(async (item) => {
             const content = await generateQR({
@@ -74,7 +72,6 @@ export class QRGeneratorManager {
 
         results.push(...batchResults)
 
-        // Update progress
         const current = Math.min(i + batchSize, items.length)
         this.progressCallback?.({
           current,
@@ -83,8 +80,7 @@ export class QRGeneratorManager {
           status: 'generating'
         })
 
-        // Small delay to prevent blocking UI
-        await new Promise(resolve => setTimeout(resolve, 10))
+        await new Promise(resolve => setTimeout(resolve, 0))
       }
 
       // Update progress to compressing
@@ -96,17 +92,18 @@ export class QRGeneratorManager {
         message: 'Creating ZIP file...'
       })
 
-      // Create ZIP file
       const zip = new JSZip()
 
       for (const result of results) {
         if (format === 'png') {
-          // Convert base64 to blob for PNG
-          const response = await fetch(result.content as string)
-          const blob = await response.blob()
-          zip.file(result.filename, blob)
+          const base64 = (result.content as string).split(',')[1]
+          const binary = atob(base64)
+          const bytes = new Uint8Array(binary.length)
+          for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i)
+          }
+          zip.file(result.filename, bytes)
         } else {
-          // SVG is text, add directly
           zip.file(result.filename, result.content as string)
         }
       }
@@ -114,7 +111,8 @@ export class QRGeneratorManager {
       const zipBlob = await zip.generateAsync({
         type: 'blob',
         compression: 'DEFLATE',
-        compressionOptions: { level: 1 }
+        compressionOptions: { level: 1 },
+        streamFiles: true
       })
 
       this.progressCallback?.({

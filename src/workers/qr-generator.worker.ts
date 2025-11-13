@@ -1,4 +1,4 @@
-import { generateQR } from '../lib/qr-generation-worker'
+import { generateQR } from '../lib/qr-generation'
 import type { QRDesignOptions } from '../lib/config'
 
 export type QRWorkerMessage =

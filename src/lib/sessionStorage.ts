@@ -6,6 +6,7 @@ export interface SessionState {
   designStep: string
   design: typeof defaultQRDesign
   csvData: CSVData | null
+  csvDataHash?: string
   urlPattern: string
   labelPattern: string
   selectedVariables: string[]
@@ -66,11 +67,17 @@ function getStorageData(): StorageData {
 }
 
 function saveStorageData(data: StorageData): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-  } catch (error) {
-    console.error('Failed to save storage data:', error)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+}
+
+function hashString(str: string): string {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash
   }
+  return hash.toString(36)
 }
 
 function getSessionSizeInMB(session: Session): number {
@@ -146,13 +153,20 @@ export function saveSession(sessionId: string, state: SessionState): void {
   const data = getStorageData()
   const session = data.sessions[sessionId]
 
-  if (!session) {
-    return
+  if (!session) return
+
+  const newHash = state.csvData ? hashString(JSON.stringify(state.csvData)) : undefined
+  const oldHash = session.state.csvDataHash
+
+  if (newHash !== oldHash) {
+    session.state = state
+    session.state.csvDataHash = newHash
+  } else {
+    const { csvData, ...stateWithoutCSV } = state
+    session.state = { ...stateWithoutCSV, csvData: session.state.csvData, csvDataHash: oldHash }
   }
 
-  session.state = state
   session.updatedAt = Date.now()
-
   saveStorageData(data)
 }
 
