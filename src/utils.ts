@@ -64,6 +64,9 @@ function applyPaddingToSVG(svgString: string, padding: QRPadding): string {
 </svg>`
 }
 
+// Internal QR generation functions for batch processing
+// For single QR generation, use generateQR() from lib/qr-generation.ts
+
 interface QROptions {
   tileLabel: string
   errorCorrectionLevel?: 'L' | 'M' | 'Q' | 'H'

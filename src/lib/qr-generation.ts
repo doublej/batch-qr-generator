@@ -91,9 +91,9 @@ function applyPadding(canvas: HTMLCanvasElement, padding: QRPadding, backgroundC
     return canvas
   }
 
-  const bounds = calculateContentBounds(canvas.width)
-  const contentWidth = bounds.maxX - bounds.minX + 1
-  const contentHeight = bounds.maxY - bounds.minY + 1
+  // Use the full canvas dimensions when text is included
+  const contentWidth = canvas.width
+  const contentHeight = canvas.height
 
   const finalCanvas = document.createElement('canvas')
   finalCanvas.width = contentWidth + padding.left + padding.right
@@ -105,7 +105,7 @@ function applyPadding(canvas: HTMLCanvasElement, padding: QRPadding, backgroundC
 
   ctx.drawImage(
     canvas,
-    bounds.minX, bounds.minY, contentWidth, contentHeight,
+    0, 0, contentWidth, contentHeight,
     padding.left, padding.top, contentWidth, contentHeight
   )
 
@@ -123,7 +123,11 @@ function addTextLabel(
   const textSpacing = 10
   const isHorizontal = textConfig.position === 'left' || textConfig.position === 'right'
 
-  const textSpace = lineHeight + textSpacing
+  // Calculate space: textSize (ascent) + textSize*0.3 (descent) + spacing + offsetY buffer
+  const textHeight = textConfig.size * 1.3 // Account for ascenders and descenders
+  const isAbove = textConfig.position === 'top'
+  const offsetBuffer = isAbove ? Math.max(0, -textConfig.offsetY) : Math.max(0, textConfig.offsetY)
+  const textSpace = textHeight + textSpacing + offsetBuffer
   const finalWidth = isHorizontal ? qrSize + qrSize : qrSize
   const finalHeight = isHorizontal ? qrSize : qrSize + textSpace
 
@@ -144,10 +148,12 @@ function addTextLabel(
   ctx.textAlign = textConfig.align
 
   let textX = textConfig.offsetX
-  let textY = lineHeight * 0.8 + textConfig.offsetY
+  let textY = textConfig.size + textConfig.offsetY // Default for top position
 
   if (textConfig.position === 'bottom') {
-    textY = qrSize + textSpacing + lineHeight * 0.8 + textConfig.offsetY
+    textY = qrSize + textSpacing + textConfig.size + textConfig.offsetY
+  } else if (textConfig.position === 'top') {
+    textY = textConfig.size + offsetBuffer + textConfig.offsetY
   } else if (textConfig.position === 'right') {
     textX = qrSize + textConfig.offsetX
     textY = qrSize / 2 + textConfig.offsetY
@@ -234,10 +240,11 @@ function applySVGPadding(svgString: string, padding: QRPadding, backgroundColor:
   const newHeight = height + padding.top + padding.bottom
 
   // Extract inner SVG content while removing any XML declarations
+  // Use a more precise approach to extract just the content between the outer <svg> tags
   const innerSvg = svgString
     .replace(/<\?xml[^?]*\?>/g, '') // Remove any XML declarations
-    .replace(/<svg[^>]*>/, '')       // Remove opening SVG tag
-    .replace('</svg>', '')            // Remove closing SVG tag
+    .replace(/^<svg[^>]*>/, '')      // Remove opening SVG tag (start of string)
+    .replace(/<\/svg>\s*$/, '')      // Remove closing SVG tag (end of string)
     .trim()                           // Clean up whitespace
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${newWidth} ${newHeight}" width="${newWidth}" height="${newHeight}">
@@ -310,11 +317,18 @@ async function generateSVG(text: string, options: QRDesignOptions, tileLabel?: s
   const textSpacing = 10
   const isHorizontal = options.text.position === 'left' || options.text.position === 'right'
 
-  const textSpace = lineHeight + textSpacing
+  // Calculate space: textSize (ascent) + textSize*0.3 (descent) + spacing + offsetY buffer
+  const textHeight = options.text.size * 1.3
+  const isAbove = options.text.position === 'top'
+  const offsetBuffer = isAbove ? Math.max(0, -options.text.offsetY) : Math.max(0, options.text.offsetY)
+  const textSpace = textHeight + textSpacing + offsetBuffer
   const finalWidth = isHorizontal ? options.qr.size + options.qr.size : options.qr.size
   const finalHeight = isHorizontal ? options.qr.size : options.qr.size + textSpace
 
-  // Extract inner SVG content while removing any XML declarations
+  // Extract inner SVG content and viewBox while removing any XML declarations
+  const viewBoxMatch = svgString.match(/viewBox="([^"]+)"/)
+  const viewBox = viewBoxMatch ? viewBoxMatch[1] : `0 0 ${options.qr.size} ${options.qr.size}`
+
   const innerSvg = svgString
     .replace(/<\?xml[^?]*\?>/g, '') // Remove any XML declarations
     .replace(/<svg[^>]*>/, '')       // Remove opening SVG tag
@@ -324,10 +338,12 @@ async function generateSVG(text: string, options: QRDesignOptions, tileLabel?: s
   const qrY = options.text.position === 'top' ? textSpace : 0
 
   let textX = options.text.offsetX
-  let textY = lineHeight * 0.8 + options.text.offsetY
+  let textY = options.text.size + options.text.offsetY // Default for top position
 
   if (options.text.position === 'bottom') {
-    textY = options.qr.size + textSpacing + lineHeight * 0.8 + options.text.offsetY
+    textY = options.qr.size + textSpacing + options.text.size + options.text.offsetY
+  } else if (options.text.position === 'top') {
+    textY = options.text.size + offsetBuffer + options.text.offsetY
   } else if (options.text.position === 'right') {
     textX = options.qr.size + options.text.offsetX
     textY = options.qr.size / 2 + options.text.offsetY
@@ -352,9 +368,9 @@ async function generateSVG(text: string, options: QRDesignOptions, tileLabel?: s
 
   const svgWithText = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${finalWidth} ${finalHeight}" width="${finalWidth}" height="${finalHeight}">
   <rect width="${finalWidth}" height="${finalHeight}" fill="${options.colors.background}"/>
-  <g transform="translate(${qrX}, ${qrY})">
+  <svg x="${qrX}" y="${qrY}" width="${options.qr.size}" height="${options.qr.size}" viewBox="${viewBox}">
     ${innerSvg}
-  </g>
+  </svg>
   <text x="${textX}" y="${textY}" font-family="${options.text.font}, sans-serif" font-size="${options.text.size}" ${fontWeightAttr} text-anchor="${textAnchor}" fill="${options.text.color}" ${rotateAttr}>${tileLabel}</text>
 </svg>`
 

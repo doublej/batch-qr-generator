@@ -2,7 +2,7 @@
   import type { CSVData } from '../types'
   import type { QRDesignOptions } from '$lib/config'
   import { replaceVariables } from '../lib/csv-parser'
-  import { generateQRDataURL } from '../utils'
+  import { generateQR } from '../lib/qr-generation'
   import { Card, CardContent } from '$lib/components/ui/card'
   import { Button } from '$lib/components/ui/button'
   import { Input } from '$lib/components/ui/input'
@@ -77,35 +77,11 @@
       try {
         if (signal.aborted) return
 
-        const dataUrl = await generateQRDataURL(urlPattern, {
-          tileLabel: labelEnabled ? labelPattern : '',
-          errorCorrectionLevel: options.qr.errorCorrection,
-          logoDataURL: options.logo.enabled ? options.logo.dataURL : '',
-          logoSize: options.logo.size,
-          logoWidth: options.logo.width,
-          logoHeight: options.logo.height,
-          logoFit: options.logo.fit,
-          logoPlacement: options.logo.placement,
-          textSize: options.text.size,
-          textPosition: options.text.position,
-          textOffsetX: options.text.offsetX,
-          textOffsetY: options.text.offsetY,
-          showTileLabel: options.text.enabled,
-          textAlign: options.text.align,
-          textFont: options.text.font,
-          textWeight: options.text.weight,
-          textColor: options.text.color,
-          textRotation: options.text.rotation,
-          qrSize: options.qr.size,
-          qrPadding: options.qr.padding,
-          backgroundColor: options.colors.background,
-          eyeColor: options.colors.eyeColor,
-          dataModuleColor: options.colors.dataModuleColor,
-          useGradient: options.gradient.enabled,
-          gradientType: options.gradient.type,
-          gradientStart: options.gradient.startColor,
-          gradientEnd: options.gradient.endColor,
-          gradientAngle: options.gradient.angle
+        const dataUrl = await generateQR({
+          text: urlPattern,
+          format: 'png',
+          options,
+          tileLabel: labelEnabled ? labelPattern : undefined
         })
 
         if (!signal.aborted) {
@@ -138,35 +114,11 @@
         const label = replaceVariables(labelPattern, row, previewIndex, csvData.rows.length)
         currentURL = url
 
-        const dataUrl = await generateQRDataURL(url, {
-          tileLabel: labelEnabled ? label : '',
-          errorCorrectionLevel: options.qr.errorCorrection,
-          logoDataURL: options.logo.enabled ? options.logo.dataURL : '',
-          logoSize: options.logo.size,
-          logoWidth: options.logo.width,
-          logoHeight: options.logo.height,
-          logoFit: options.logo.fit,
-          logoPlacement: options.logo.placement,
-          textSize: options.text.size,
-          textPosition: options.text.position,
-          textOffsetX: options.text.offsetX,
-          textOffsetY: options.text.offsetY,
-          showTileLabel: options.text.enabled,
-          textAlign: options.text.align,
-          textFont: options.text.font,
-          textWeight: options.text.weight,
-          textColor: options.text.color,
-          textRotation: options.text.rotation,
-          qrSize: options.qr.size,
-          qrPadding: options.qr.padding,
-          backgroundColor: options.colors.background,
-          eyeColor: options.colors.eyeColor,
-          dataModuleColor: options.colors.dataModuleColor,
-          useGradient: options.gradient.enabled,
-          gradientType: options.gradient.type,
-          gradientStart: options.gradient.startColor,
-          gradientEnd: options.gradient.endColor,
-          gradientAngle: options.gradient.angle
+        const dataUrl = await generateQR({
+          text: url,
+          format: 'png',
+          options,
+          tileLabel: labelEnabled ? label : undefined
         })
 
         if (!signal.aborted) {
@@ -190,7 +142,7 @@
     updateTimeout = setTimeout(updatePreview, 100)
   }
 
-  function downloadPreview() {
+  async function downloadPreviewPNG() {
     if (!previewQR) return
 
     if (mode === 'single') {
@@ -205,6 +157,49 @@
       link.download = `${label || `qr-${previewIndex + 1}`}.png`
       link.href = previewQR
       link.click()
+    }
+  }
+
+  async function downloadPreviewSVG() {
+    if (mode === 'single') {
+      if (!urlPattern) return
+
+      const { generateQR } = await import('../lib/qr-generation')
+
+      const svgString = await generateQR({
+        text: urlPattern,
+        format: 'svg',
+        options,
+        tileLabel: labelEnabled ? labelPattern : undefined
+      })
+
+      const blob = new Blob([svgString], { type: 'image/svg+xml' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.download = `${labelPattern || 'qr-code'}.svg`
+      link.href = url
+      link.click()
+      URL.revokeObjectURL(url)
+    } else if (csvData) {
+      const { generateQR } = await import('../lib/qr-generation')
+      const row = csvData.rows[previewIndex]
+      const url = replaceVariables(urlPattern, row, previewIndex, csvData.rows.length)
+      const label = replaceVariables(labelPattern, row, previewIndex, csvData.rows.length)
+
+      const svgString = await generateQR({
+        text: url,
+        format: 'svg',
+        options,
+        tileLabel: labelEnabled ? label : undefined
+      })
+
+      const blob = new Blob([svgString], { type: 'image/svg+xml' })
+      const urlBlob = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.download = `${label || `qr-${previewIndex + 1}`}.svg`
+      link.href = urlBlob
+      link.click()
+      URL.revokeObjectURL(urlBlob)
     }
   }
 
@@ -375,9 +370,14 @@
                   </Button>
                 </div>
               {/if}
-              <Button size="sm" onclick={downloadPreview} class="w-full">
-                {$_('previewPanel.download')}
-              </Button>
+              <div class="flex gap-2">
+                <Button size="sm" onclick={downloadPreviewPNG} class="flex-1">
+                  PNG
+                </Button>
+                <Button size="sm" onclick={downloadPreviewSVG} class="flex-1">
+                  SVG
+                </Button>
+              </div>
             </div>
           </div>
         {:else}

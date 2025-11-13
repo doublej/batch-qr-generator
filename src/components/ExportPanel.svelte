@@ -1,8 +1,9 @@
 <script lang="ts">
   import type { CSVData } from '../types'
   import type { QRDesignOptions } from '$lib/config'
-  import { generateQRDataURL, downloadFile } from '../utils'
+  import { generateQR } from '../lib/qr-generation'
   import {
+    downloadFile,
     downloadAllQRsFromCSV,
     downloadAllQRsSVGFromCSV,
     downloadCSVData
@@ -71,32 +72,11 @@
     exporting = true
 
     try {
-      const dataUrl = await generateQRDataURL(urlPattern, {
-        tileLabel: labelEnabled ? labelPattern : '',
-        errorCorrectionLevel: options.qr.errorCorrection,
-        logoDataURL: options.logo.enabled ? options.logo.dataURL : '',
-        logoSize: options.logo.size,
-        logoPlacement: options.logo.placement,
-        textSize: options.text.size,
-        textPosition: options.text.position,
-        textOffsetX: options.text.offsetX,
-        textOffsetY: options.text.offsetY,
-        showTileLabel: options.text.enabled,
-        textAlign: options.text.align,
-        textFont: options.text.font,
-        textWeight: options.text.weight,
-        textColor: options.text.color,
-        textRotation: options.text.rotation,
-        qrSize: options.qr.size,
-        qrPadding: options.qr.padding,
-        backgroundColor: options.colors.background,
-        eyeColor: options.colors.eyeColor,
-        dataModuleColor: options.colors.dataModuleColor,
-        useGradient: options.gradient.enabled,
-        gradientType: options.gradient.type,
-        gradientStart: options.gradient.start,
-        gradientEnd: options.gradient.end,
-        gradientAngle: options.gradient.angle
+      const dataUrl = await generateQR({
+        text: urlPattern,
+        format: 'png',
+        options,
+        tileLabel: labelEnabled ? labelPattern : undefined
       })
 
       const blob = await (await fetch(dataUrl)).blob()
