@@ -1,4 +1,4 @@
-import { generateQRCodeSVG } from '../qrcode'
+import QRCode from 'qrcodejs'
 import type { QRDesignOptions, QRPadding } from './config'
 import { calculateLogoPosition } from './logo-utils'
 import { getEstimatedModuleCount, getPixelsPerModule } from './qr-dimensions'
@@ -10,17 +10,21 @@ interface GenerateQRParams {
   tileLabel?: string
 }
 
-function createBasicQRSVG(text: string, options: QRDesignOptions): SVGElement {
+function createBasicQRSVG(text: string, options: QRDesignOptions): HTMLElement {
   const { qr, colors } = options
   const eclMap = { L: 'L', M: 'M', Q: 'Q', H: 'H' } as const
 
-  return generateQRCodeSVG({
-    msg: text,
-    ecl: eclMap[qr.errorCorrection],
-    pal: [colors.dataModuleColor, colors.background],
-    dim: qr.size,
-    pad: 0
+  const container = document.createElement('div')
+  new QRCode(container, {
+    text,
+    width: qr.size,
+    height: qr.size,
+    colorDark: colors.dataModuleColor,
+    colorLight: colors.background,
+    correctLevel: QRCode.CorrectLevel[eclMap[qr.errorCorrection]]
   })
+
+  return container.querySelector('svg') as HTMLElement
 }
 
 async function addNonCenterLogo(
@@ -149,7 +153,7 @@ function addTextLabel(
   return finalCanvas
 }
 
-async function svgToCanvas(svgElement: SVGElement): Promise<HTMLCanvasElement> {
+async function svgToCanvas(svgElement: HTMLElement): Promise<HTMLCanvasElement> {
   const svgString = new XMLSerializer().serializeToString(svgElement)
   const canvas = document.createElement('canvas')
   const img = new Image()
